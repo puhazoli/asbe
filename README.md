@@ -11,12 +11,42 @@ Created with nbdev by ZP
 ## How to use
 
 ```python
-say_hello("Zoltan")
+from asbe.core import *
+# say_hello("Zoltan")
+```
+
+```python
+ASLearner()
+```
+
+
+    ---------------------------------------------------------------------------
+
+    TypeError                                 Traceback (most recent call last)
+
+    <ipython-input-2-09d18ea934eb> in <module>
+    ----> 1 ASLearner()
+    
+
+    TypeError: __init__() missing 3 required positional arguments: 'estimator', 'query_strategy', and 'assignment_fc'
+
+
+```python
+import numpy as np
+```
+
+```python
+def daily_hun_count():
+    return(np.random.poisson(100, 1))
+```
+
+```python
+daily_hun_count()
 ```
 
 
 
 
-    'Hello Zoltan!'
+    array([94])
 
 

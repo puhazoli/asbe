@@ -12,6 +12,7 @@ import numpy as np
 # Cell
 estimator_type = ClassifierMixin
 class ASLearner(BaseLearner):
+    """A(ctively)S(topping)Learner class for automatic stopping in batch-mode AL"""
     def __init__(self,
                  estimator: Optional[estimator_type]=None,
                  query_strategy=None,

@@ -8,8 +8,8 @@ index = {"ASLearner": "00_core.ipynb",
 
 modules = ["core.py"]
 
-doc_url = "https://zoltan.github.io/asbe/"
+doc_url = "https://puhazoli.github.io/asbe/"
 
-git_url = "https://github.com/zoltan/asbe/tree/master/"
+git_url = "https://github.com/puhazoli/asbe/tree/master/"
 
 def custom_doc_links(name): return None
