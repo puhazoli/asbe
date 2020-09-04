@@ -9,44 +9,22 @@ Created with nbdev by ZP
 `python -m pip install  git+https://github.com/puhazoli/asbe`
 
 ## How to use
+ASBE builds on the functional views of modAL, where an AL algorithm can be run by putting together pieces. You need the following ingredients:
+- an ITE estimator (`ITEEstimator()`),
+- an acquisition function,
+- and an assignment function.
+- Additionaly, you can add a stopping criteria to your model. 
+If all the above are defined, you can construct an `ASLearner`, which will help you in the active learning process.
 
 ```python
 from asbe.core import *
-# say_hello("Zoltan")
-```
-
-```python
-ASLearner()
-```
-
-
-    ---------------------------------------------------------------------------
-
-    TypeError                                 Traceback (most recent call last)
-
-    <ipython-input-2-09d18ea934eb> in <module>
-    ----> 1 ASLearner()
-    
-
-    TypeError: __init__() missing 3 required positional arguments: 'estimator', 'query_strategy', and 'assignment_fc'
-
-
-```python
+from sklearn.linear_model import LogisticRegression
 import numpy as np
 ```
 
 ```python
-def daily_hun_count():
-    return(np.random.poisson(100, 1))
+X = np.random.normal(size = 1000).reshape((500,2))
+t = np.random.binomial(n = 1, p = 0.5, size = 500)
+y = np.random.binomial(n = 1, p = 1/(1+np.exp(X[:, 1]*2 + t*3)))
+a = ITEEstimator(LogisticRegression(), X, t, y)
 ```
-
-```python
-daily_hun_count()
-```
-
-
-
-
-    array([94])
-
-
