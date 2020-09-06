@@ -26,5 +26,10 @@ import numpy as np
 X = np.random.normal(size = 1000).reshape((500,2))
 t = np.random.binomial(n = 1, p = 0.5, size = 500)
 y = np.random.binomial(n = 1, p = 1/(1+np.exp(X[:, 1]*2 + t*3)))
-a = ITEEstimator(LogisticRegression(), X, t, y)
+a = ITEEstimator(LogisticRegression())
+a.fit(X, t, y)
 ```
+
+    /opt/anaconda3/lib/python3.7/site-packages/sklearn/linear_model/logistic.py:432: FutureWarning: Default solver will be changed to 'lbfgs' in 0.22. Specify a solver to silence this warning.
+      FutureWarning)
+
