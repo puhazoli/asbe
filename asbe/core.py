@@ -14,7 +14,7 @@ def random_batch_sampling(classifier, X_pool, n2):
     "Randomly sample a batch from a pool of unlabaled samples"
     n_samples = len(X_pool)
     query_idx = np.random.choice(range(n_samples), size=n2)
-    return query_idx, X_pool[query_idx]
+    return X_pool[query_idx], query_idx
 
 estimator_type = ClassifierMixin
 class ASLearner(BaseLearner):
@@ -43,12 +43,25 @@ class ASLearner(BaseLearner):
                                        t_training  = t_training,
                                        X_test      = X_pool)
 
+    def teach(self, X, X_query, t_test, y_test):
+        """Teaching new instances to the estimator selected bu the query_strategy
 
-    def teach(self, X, X_query):
-        return(self.estimator.fit(np.hstack(X, X_query)))
+        If no `assignment_fc` is added, all selected samples are used
+        If assignment function is added, only those instances are used, where
+        $\hat{T} = T$
+        """
+        if assignment_fc is None:
+            self.estimator.fit()
 
     def fit(self):
         self.estimator.fit()
+
+    def predict(self, X=None):
+        if self.X_pool is not None:
+            X = self.X_pool
+        elif X is None:
+            raise Exception("You need to supply an unlabeled pool of instances (with shape (-1,{}))".format(self.X_training.shape[1]))
+        return self.estimator.predict(X)
 
 # Cell
 class ITEEstimator(BaseEstimator):
@@ -56,25 +69,24 @@ class ITEEstimator(BaseEstimator):
     """
     def __init__(self,
                  model: estimator_type = None,
-                 X_training: np.ndarray = None,
-                 t_training: np.ndarray = None,
-                 y_training: np.ndarray = None,
-                 X_test: np.ndarray = None,
                  two_model: bool = False,
                  **kwargs
                 ) -> None:
         self.model = model
-        self.X_training = X_training
-        self.y_training = y_training
-        self.t_training = t_training
-        self.two_model  = two_model
-        self.X_test = X_test
-        if X_training is not None:
-            self.N_training = X_training.shape[0]
+        self.two_model = two_model
 
-    def fit(self):
-        if "N_training" not in self.__dict__:
-            self.N_training = self.X_training.shape[0]
+    def fit(self,X_training: np.ndarray = None,
+                 t_training: np.ndarray = None,
+                 y_training: np.ndarray = None,
+                 X_test: np.ndarray = None):
+        if X_training is not None:
+            self.X_training = X_training
+            self.y_training = y_training
+            self.t_training = t_training
+            self.X_test = X_test
+        self.N_training = self.X_training.shape[0]
+        # if "N_training" not in self.__dict__:
+        #     self.N_training = self.X_training.shape[0]
         if self.two_model:
             self.m1 = deepcopy(self.model)
             control_ix = np.where(self.t_training == 0)[0]
