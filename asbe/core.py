@@ -8,6 +8,7 @@ from sklearn.base import BaseEstimator, ClassifierMixin, RegressorMixin
 from typing import Union, Optional
 from copy import deepcopy
 import numpy as np
+from pylift.eval import UpliftEval
 
 # Cell
 def random_batch_sampling(classifier, X_pool, n2):
@@ -28,32 +29,38 @@ class ASLearner(BaseLearner):
                  y_training: np.ndarray = None,
                  X_pool: np.ndarray = None
                 ) -> None:
-        self.estimator = estimator#,
-                                  #t_training = t_training,
-                                  #y_training = y_training,
-                                  #X_test     = X_pool)
+        self.estimator = estimator
         self.query_strategy = query_strategy
         self.assignment_fc = assignment_fc
         self.X_training = X_training
         self.y_training = y_training
         self.t_training = t_training
         self.X_pool     = X_pool
-        self.estimator.__dict__.update(X_training = X_training,
-                                       y_training  = y_training,
-                                       t_training  = t_training,
-                                       X_test      = X_pool)
 
-    def teach(self, X, X_query, t_test, y_test):
+    def _add_queried_data_class(self, X, t, y):
+        self.X_training = np.vstack((self.X_training, X))
+        self.t_training = np.concatenate((self.t_training, t))
+        self.y_training = np.concatenate((self.y_training, y))
+
+    def _update_estimator_values(self):
+        self.estimator.__dict__.update(X_training = self.X_training,
+                               y_training  =        self.y_training,
+                               t_training  =        self.t_training,
+                               X_test      =        self.X_pool)
+
+    def teach(self, X_new, t_new, y_new):
         """Teaching new instances to the estimator selected bu the query_strategy
 
         If no `assignment_fc` is added, all selected samples are used
         If assignment function is added, only those instances are used, where
         $\hat{T} = T$
         """
-        if assignment_fc is None:
+        if self.assignment_fc is None:
+            self._add_queried_data_class(X, t_test, y_test)
             self.estimator.fit()
 
     def fit(self):
+        self._update_estimator_values()
         self.estimator.fit()
 
     def predict(self, X=None):
@@ -61,7 +68,18 @@ class ASLearner(BaseLearner):
             X = self.X_pool
         elif X is None:
             raise Exception("You need to supply an unlabeled pool of instances (with shape (-1,{}))".format(self.X_training.shape[1]))
-        return self.estimator.predict(X)
+        self.preds = self.estimator.predict(X)
+        return self.preds
+
+    def score(self, preds, y_true, t_true=None, metric = "Qini"):
+        """
+        Scoring the predictions - either ITE or observed outcomes are needed.
+
+        If observed outcomes are provided, the accompanying treatments are also needed.
+        """
+        if metric == "Qini":
+             upev = UpliftEval(t_true, y_true, self.preds[0] if preds is None else preds)
+        return upev.
 
 # Cell
 class ITEEstimator(BaseEstimator):
