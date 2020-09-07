@@ -3,18 +3,19 @@
 __all__ = ['random_batch_sampling', 'ASLearner', 'estimator_type', 'ITEEstimator']
 
 # Cell
+import numpy as np
+
 from modAL.models.base import BaseLearner
 from sklearn.base import BaseEstimator, ClassifierMixin, RegressorMixin
 from typing import Union, Optional
 from copy import deepcopy
-import numpy as np
 from pylift.eval import UpliftEval
 
 # Cell
 def random_batch_sampling(classifier, X_pool, n2):
     "Randomly sample a batch from a pool of unlabaled samples"
     n_samples = len(X_pool)
-    query_idx = np.random.choice(range(n_samples), size=n2)
+    query_idx = np.random.choice(range(n_samples), size=n2,replace=False)
     return X_pool[query_idx], query_idx
 
 estimator_type = ClassifierMixin
@@ -56,7 +57,7 @@ class ASLearner(BaseLearner):
         $\hat{T} = T$
         """
         if self.assignment_fc is None:
-            self._add_queried_data_class(X, t_test, y_test)
+            self._add_queried_data_class(X_new, t_test, y_test)
             self.estimator.fit()
 
     def fit(self):
@@ -71,15 +72,16 @@ class ASLearner(BaseLearner):
         self.preds = self.estimator.predict(X)
         return self.preds
 
-    def score(self, preds, y_true, t_true=None, metric = "Qini"):
+    def score(self, preds=None, y_true=None, t_true=None, metric = "Qini"):
         """
         Scoring the predictions - either ITE or observed outcomes are needed.
 
         If observed outcomes are provided, the accompanying treatments are also needed.
         """
         if metric == "Qini":
-             upev = UpliftEval(t_true, y_true, self.preds[0] if preds is None else preds)
-        return upev.
+            upev = UpliftEval(t_true, y_true, self.preds[0] if preds is None else preds)
+            self.scores = upev
+        return self.scores.q1_aqini
 
 # Cell
 class ITEEstimator(BaseEstimator):
