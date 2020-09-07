@@ -18,6 +18,9 @@ def random_batch_sampling(classifier, X_pool, n2):
     query_idx = np.random.choice(range(n_samples), size=n2,replace=False)
     return X_pool[query_idx], query_idx
 
+#TODO uncertainty_batch_sampling(classifier, X_pool, n2):
+
+# Cell
 estimator_type = ClassifierMixin
 class ASLearner(BaseLearner):
     """A(ctively)S(topping)Learner class for automatic stopping in batch-mode AL"""
@@ -64,12 +67,12 @@ class ASLearner(BaseLearner):
         self._update_estimator_values()
         self.estimator.fit()
 
-    def predict(self, X=None):
+    def predict(self, X=None, **kwargs):
         if self.X_pool is not None:
             X = self.X_pool
         elif X is None:
             raise Exception("You need to supply an unlabeled pool of instances (with shape (-1,{}))".format(self.X_training.shape[1]))
-        self.preds = self.estimator.predict(X)
+        self.preds = self.estimator.predict(X, **kwargs)
         return self.preds
 
     def score(self, preds=None, y_true=None, t_true=None, metric = "Qini"):
@@ -119,18 +122,36 @@ class ITEEstimator(BaseEstimator):
                                       self.t_training.reshape((self.N_training, -1)))),
                            self.y_training)
 
-    def predict(self, X=None):
+    def _predict_without_proba(self, model, X, **kwargs):
+        return model.predict(X,
+            return_mean = kwargs["return_mean"] if "return_mean" in kwargs else True)
+
+    def predict(self, X=None, **kwargs):
         if X is None:
             X = self.X_test
-        if self.two_model:
-            self.y1_preds = self.m1.predict_proba(X)[:,1]
-            self.y0_preds = self.model.predict_proba(X)[:,1]
-        else:
-            N_test = X.shape[0]
-            self.y1_preds = self.model.predict_proba(
-                                np.hstack((X,
-                                np.ones(N_test).reshape(-1,1))))[:,1]
-            self.y0_preds = self.model.predict_proba(
-                np.hstack((X,
-                           np.zeros(N_test).reshape(-1,1))))[:,1]
+        N_test = X.shape[0]
+        try:
+            if self.two_model:
+                self.y1_preds = self.m1.predict_proba(X)[:,1]
+                self.y0_preds = self.model.predict_proba(X)[:,1]
+            else:
+
+                self.y1_preds = self.model.predict_proba(
+                                    np.hstack((X,
+                                    np.ones(N_test).reshape(-1,1))))[:,1]
+                self.y0_preds = self.model.predict_proba(
+                    np.hstack((X,
+                               np.zeros(N_test).reshape(-1,1))))[:,1]
+        except AttributeError:
+            if type(self.model) is XBART:
+                if self.two_model:
+                    self.y1_preds = self._predict_without_proba(self.m1, X, **kwargs)
+                    self.y0_preds = self._predict_without_proba(self.model, X, **kwargs)
+                else:
+                    self.y1_preds = self._predict_without_proba(self.model,
+                             np.hstack((X,
+                             np.ones(N_test).reshape(-1,1))), **kwargs)
+                    self.y0_preds = self._predict_without_proba(self.model,
+                        np.hstack((X,
+                                   np.zeros(N_test).reshape(-1,1))), **kwargs)
         return self.y1_preds - self.y0_preds, self.y1_preds, self.y0_preds
