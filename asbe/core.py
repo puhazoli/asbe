@@ -21,13 +21,18 @@ def random_batch_sampling(classifier, X_pool, n2):
 def uncertainty_batch_sampling(classifier, X_pool, n2):
     "Select the top $n_2$ most uncertain units"
     if classifier.estimator._most_recent_predicted is True:
+        y1_preds = classifier.estimator.y1_preds
+        y0_preds = classifier.estimator.y0_preds
+    else:
+        ite_preds, y1_preds, y_preds = classifier.predict(X_pool, return_mean=False)
         # Calculate variance based on predicted
-        if classifier.estimator.y1_preds.shape[0] <= 1 or \
-        len(classifier.estimator.y1_preds.shape) <= 1:
+    if y1_preds.shape[0] <= 1 or \
+    len(y1_preds.shape) <= 1:
             raise Exception("Not possible to calculate uncertainty when dimensions <=1 ")
-        ite_vars = np.var(classifier.estimator.y1_preds - classifier.estimator.y0_preds, axis=1)
-        query_idx = np.argsort(ite_vars)[-n2:][::-1]
-        return X_pool[query_idx], query_idx
+    ite_vars = np.var(classifier.estimator.y1_preds - classifier.estimator.y0_preds, axis=1)
+    query_idx = np.argsort(ite_vars)[-n2:][::-1]
+
+    return X_pool[query_idx], query_idx
 
 
 # Cell
