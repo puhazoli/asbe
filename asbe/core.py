@@ -20,11 +20,7 @@ def random_batch_sampling(classifier, X_pool, n2):
 
 def uncertainty_batch_sampling(classifier, X_pool, n2):
     "Select the top $n_2$ most uncertain units"
-    if classifier.estimator._most_recent_predicted is True:
-        y1_preds = classifier.estimator.y1_preds
-        y0_preds = classifier.estimator.y0_preds
-    else:
-        ite_preds, y1_preds, y_preds = classifier.predict(X_pool, return_mean=False)
+    ite_preds, y1_preds, y_preds = classifier.predict(X_pool, return_mean=False)
         # Calculate variance based on predicted
     if y1_preds.shape[0] <= 1 or \
     len(y1_preds.shape) <= 1:
@@ -46,7 +42,8 @@ class ASLearner(BaseLearner):
                  X_training: np.ndarray = None,
                  t_training: np.ndarray = None,
                  y_training: np.ndarray = None,
-                 X_pool: np.ndarray = None
+                 X_pool: np.ndarray = None,
+                 X_test: np.ndarray = None
                 ) -> None:
         self.estimator = estimator
         self.query_strategy = query_strategy
@@ -55,9 +52,12 @@ class ASLearner(BaseLearner):
         self.y_training = y_training
         self.t_training = t_training
         self.X_pool     = X_pool
+        self.X_test     = X_test
 
     def _add_queried_data_class(self, X, t, y):
         self.X_training = np.vstack((self.X_training, X))
+        print(self.t_training.shape)
+        print(t.shape)
         self.t_training = np.concatenate((self.t_training, t))
         self.y_training = np.concatenate((self.y_training, y))
 
@@ -65,7 +65,7 @@ class ASLearner(BaseLearner):
         self.estimator.__dict__.update(X_training = self.X_training,
                                y_training  =        self.y_training,
                                t_training  =        self.t_training,
-                               X_test      =        self.X_pool)
+                               X_test      =        self.X_test)
 
     def teach(self, X_new, t_new, y_new):
         """Teaching new instances to the estimator selected bu the query_strategy
@@ -75,17 +75,18 @@ class ASLearner(BaseLearner):
         $\hat{T} = T$
         """
         if self.assignment_fc is None:
-            self._add_queried_data_class(X_new, t_test, y_test)
-            self.estimator.fit()
+            self._add_queried_data_class(X_new, t_new, y_new)
+            self.fit()
 
     def fit(self):
         self._update_estimator_values()
         self.estimator.fit()
 
     def predict(self, X=None, **kwargs):
-        if self.X_pool is not None:
-            X = self.X_pool
-        elif X is None:
+        """Method for predicting treatment effects within Active Learning
+
+        Default is to predict on the unlabeled pool"""
+        if X is None:
             raise Exception("You need to supply an unlabeled pool of instances (with shape (-1,{}))".format(self.X_training.shape[1]))
         self.preds = self.estimator.predict(X, **kwargs)
         return self.preds
@@ -136,14 +137,12 @@ class ITEEstimator(BaseEstimator):
             self.model.fit(np.hstack((self.X_training,
                                       self.t_training.reshape((self.N_training, -1)))),
                            self.y_training)
-        self._most_recent_predicted = False
 
     def _predict_without_proba(self, model, X, **kwargs):
         return model.predict(X,
             return_mean = kwargs["return_mean"] if "return_mean" in kwargs else True)
 
     def predict(self, X=None, **kwargs):
-        self._most_recent_predicted = True
         if X is None:
             X = self.X_test
         N_test = X.shape[0]
