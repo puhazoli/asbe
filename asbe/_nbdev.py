@@ -4,6 +4,7 @@ __all__ = ["index", "modules", "custom_doc_links", "git_url"]
 
 index = {"random_batch_sampling": "00_core.ipynb",
          "uncertainty_batch_sampling": "00_core.ipynb",
+         "expected_model_change_maximization": "00_core.ipynb",
          "ASLearner": "00_core.ipynb",
          "estimator_type": "00_core.ipynb",
          "ITEEstimator": "00_core.ipynb"}

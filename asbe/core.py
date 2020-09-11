@@ -37,29 +37,34 @@ def expected_model_change_maximization(classifier, X_pool, n2, **kwargs):
     """
     Implementation of EMCM for ITE - using a surrogate SGD model.
     """
-    # Get mean of predicted ITE
-    # First, check is needed if approx_model is fitted or not
+    # Get mean of the trained prediction
     ite_train_preds, y1_train_preds, y0_train_preds = \
         classifier.predict(classifier.X_training, **kwargs)
+    # Get mean of predicted ITE
     ite_pool_preds, y1_pool_preds, y0_pool_preds = \
         classifier.predict(X_pool, **kwargs)
     # Then scale the data so sgd works the best
     sc = StandardScaler()
     X_scaled = sc.fit_transform(classifier.X_training)
+    # Fit approx model
     classifier.approx_model.fit(
         X_scaled,
         ite_train_preds if ite_train_preds.shape[1] <= 1 else np.mean(ite_train_preds, axis=1))
-    # Pre-allocating memory
+    # Using list as it is faster than appending to np array
     query_idx = []
+    # Using a loop for the combinatorial opt. part
     for ix in range(n2):
         # Select randomly from X_pool
         prob_sampling = np.ones((X_pool.shape[0]))/(X_pool.shape[0]-len(query_idx))
+        # Set the probability of already selected samples to 0
         if ix > 0:
             prob_sampling[query_idx] = 0
+        # B = 100 by default, can be modified by kwargs
         considered_ixes = np.random.choice(X_pool.shape[0],
                                          size = kwargs["B"] if "B" in kwargs else 100,
                                          replace=False,
                                          p=prob_sampling)
+        # Calculate the grads for all the
         grads = np.array([])
         for considered_ix in considered_ixes:
             new_X = sc.transform(X_pool[considered_ix].reshape(1, -1))
