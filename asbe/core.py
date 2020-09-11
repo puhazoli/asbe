@@ -40,6 +40,9 @@ def expected_model_change_maximization(classifier, X_pool, n2, **kwargs):
     # Get mean of the trained prediction
     ite_train_preds, y1_train_preds, y0_train_preds = \
         classifier.predict(classifier.X_training, **kwargs)
+    if ite_train_preds.shape[1] < 1:
+        raise ValueError("The treatment effect does not uncertainty around it - \
+                         consider using a different estimator")
     # Get mean of predicted ITE
     ite_pool_preds, y1_pool_preds, y0_pool_preds = \
         classifier.predict(X_pool, **kwargs)
@@ -69,9 +72,11 @@ def expected_model_change_maximization(classifier, X_pool, n2, **kwargs):
         for considered_ix in considered_ixes:
             new_X = sc.transform(X_pool[considered_ix].reshape(1, -1))
             app_predicted_ite = classifier.approx_model.predict(new_X)
-            true_ite = np.random.choice(ite_pool_preds[considered_ix], size=1)
-            grad = (true_ite - app_predicted_ite)*new_X
-            grads = np.append(grads, np.sum(np.abs(grad)))
+            # bootstrapping accroding to eq. 11 of Cai and Zhang
+            true_ite = np.random.choice(ite_pool_preds[considered_ix],
+                                        size=kwargs["K"] if "K" in kwargs else 5)
+            grad = np.sum(np.abs(np.kron((true_ite - app_predicted_ite),new_X)))
+            grads = np.append(grads, grad)
         query_idx.append(int(considered_ixes[np.argmax(grads)]))
         classifier.approx_model.partial_fit(
             sc.transform(X_pool[int(query_idx[ix])].reshape(1, -1)),
