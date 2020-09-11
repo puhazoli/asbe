@@ -15,7 +15,7 @@ from copy import deepcopy
 from pylift.eval import UpliftEval
 
 # Cell
-def random_batch_sampling(classifier, X_pool, n2):
+def random_batch_sampling(classifier, X_pool, n2, **kwargs):
     "Randomly sample a batch from a pool of unlabaled samples"
     n_samples = X_pool.shape[0]
     query_idx = np.random.choice(range(n_samples), size=n2,replace=False)
