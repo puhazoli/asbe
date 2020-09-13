@@ -57,6 +57,8 @@ def expected_model_change_maximization(classifier, X_pool, n2, **kwargs):
     query_idx = []
     # Using a loop for the combinatorial opt. part
     for ix in range(n2):
+        if n2 > (X_pool.shape[0] - len(query_idx)):
+            raise IndexError("Too many samples are queried from the pool ($n_2 > ||X_pool||$)")
         # Select randomly from X_pool
         prob_sampling = np.ones((X_pool.shape[0]))/(X_pool.shape[0]-len(query_idx))
         # Set the probability of already selected samples to 0
@@ -77,6 +79,9 @@ def expected_model_change_maximization(classifier, X_pool, n2, **kwargs):
                                         size=kwargs["K"] if "K" in kwargs else 5)
             grad = np.sum(np.abs(np.kron((true_ite - app_predicted_ite),new_X)))
             grads = np.append(grads, grad)
+        if np.max(grads) < kwargs["threshold"] if "threshold" in kwargs else 0:
+            break
+        classifier.model_change = np.append(classifier.model_change,np.max(grads))
         query_idx.append(int(considered_ixes[np.argmax(grads)]))
         classifier.approx_model.partial_fit(
             sc.transform(X_pool[int(query_idx[ix])].reshape(1, -1)),
@@ -108,6 +113,7 @@ class ASLearner(BaseLearner):
         self.X_pool     = X_pool
         self.X_test     = X_test
         self.approx_model = approx_model
+        self.model_change = np.array([])
 
     def _add_queried_data_class(self, X, t, y):
         self.X_training = np.vstack((self.X_training, X))
@@ -212,7 +218,7 @@ class ITEEstimator(BaseEstimator):
                     np.hstack((X,
                                np.zeros(N_test).reshape(-1,1))))[:,1]
         except AttributeError:
-            if type(self.model) is XBART:
+            try:
                 if self.two_model:
                     self.y1_preds = self._predict_without_proba(self.m1, X, **kwargs)
                     self.y0_preds = self._predict_without_proba(self.model, X, **kwargs)
@@ -223,4 +229,6 @@ class ITEEstimator(BaseEstimator):
                     self.y0_preds = self._predict_without_proba(self.model,
                         np.hstack((X,
                                    np.zeros(N_test).reshape(-1,1))), **kwargs)
+            except:
+                raise AttributeError("No method found for predicting with the supplied class")
         return self.y1_preds - self.y0_preds, self.y1_preds, self.y0_preds
