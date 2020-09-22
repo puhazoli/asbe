@@ -145,9 +145,10 @@ class ASLearner(BaseLearner):
         If assignment function is added, only those instances are used, where
         $\hat{T} = T$
         """
-        if self.assignment_fc is None:
-            self._add_queried_data_class(X_new, t_new, y_new)
-            self.fit()
+        if self.assignment_fc is not None:
+            X_new, t_new, y_new = self.assignment_fc(self, X_new, t_new, y_new)
+        self._add_queried_data_class(X_new, t_new, y_new)
+        self.fit()
 
     def fit(self):
         self._update_estimator_values()
@@ -215,15 +216,12 @@ class ITEEstimator(BaseEstimator):
             return_mean = kwargs["return_mean"] if "return_mean" in kwargs else True)
 
     def _fix_dim_pred(self,preds):
-        print(preds.shape)
         pred_length = preds.shape[0]
         if preds.shape[1] == 1:
             if np.all(preds == 0):
                 preds = np.hstack((preds, np.ones(pred_length).reshape((-1,1))))
             else:
                 preds = np.hstack((preds, np.zeros(pred_length).reshape((-1,1))))
-            print("here")
-        print(preds)
         return preds[:,1]
 
     def predict(self, X=None, **kwargs):
@@ -234,15 +232,15 @@ class ITEEstimator(BaseEstimator):
             if self.two_model:
                 self.y1_preds = self.m1.predict_proba(X)
                 self.y0_preds = self.model.predict_proba(X)
-                self.y1_preds = self._fix_dim_pred( self.y1_preds)
-                self.y0_preds = self._fix_dim_pred( self.y0_preds)
             else:
                 self.y1_preds = self.model.predict_proba(
                                     np.hstack((X,
-                                    np.ones(N_test).reshape(-1,1))))[:,1]
+                                    np.ones(N_test).reshape(-1,1))))
                 self.y0_preds = self.model.predict_proba(
                     np.hstack((X,
-                               np.zeros(N_test).reshape(-1,1))))[:,1]
+                               np.zeros(N_test).reshape(-1,1))))
+            self.y1_preds = self._fix_dim_pred( self.y1_preds)
+            self.y0_preds = self._fix_dim_pred( self.y0_preds)
         except AttributeError:
             try:
                 if self.two_model:
