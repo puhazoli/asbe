@@ -214,14 +214,28 @@ class ITEEstimator(BaseEstimator):
         return model.predict(X,
             return_mean = kwargs["return_mean"] if "return_mean" in kwargs else True)
 
+    def _fix_dim_pred(self,preds):
+        print(preds.shape)
+        pred_length = preds.shape[0]
+        if preds.shape[1] == 1:
+            if np.all(preds == 0):
+                preds = np.hstack((preds, np.ones(pred_length).reshape((-1,1))))
+            else:
+                preds = np.hstack((preds, np.zeros(pred_length).reshape((-1,1))))
+            print("here")
+        print(preds)
+        return preds[:,1]
+
     def predict(self, X=None, **kwargs):
         if X is None:
             X = self.X_test
         N_test = X.shape[0]
         try:
             if self.two_model:
-                self.y1_preds = self.m1.predict_proba(X)[:,1]
-                self.y0_preds = self.model.predict_proba(X)[:,1]
+                self.y1_preds = self.m1.predict_proba(X)
+                self.y0_preds = self.model.predict_proba(X)
+                self.y1_preds = self._fix_dim_pred( self.y1_preds)
+                self.y0_preds = self._fix_dim_pred( self.y0_preds)
             else:
                 self.y1_preds = self.model.predict_proba(
                                     np.hstack((X,
