@@ -198,7 +198,7 @@ class ITEEstimator(BaseEstimator):
         # if "N_training" not in self.__dict__:
         #     self.N_training = self.X_training.shape[0]
         if self.two_model:
-            if self.m1 is None:
+            if hasattr(self, m1) is False:
                 self.m1 = deepcopy(self.model)
             control_ix = np.where(self.t_training == 0)[0]
             self.model.fit(self.X_training[control_ix,:],
