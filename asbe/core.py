@@ -198,7 +198,7 @@ class ITEEstimator(BaseEstimator):
         # if "N_training" not in self.__dict__:
         #     self.N_training = self.X_training.shape[0]
         if self.two_model:
-            if hasattr(self, m1) is False:
+            if hasattr(self, "m1") is False:
                 self.m1 = deepcopy(self.model)
             control_ix = np.where(self.t_training == 0)[0]
             self.model.fit(self.X_training[control_ix,:],
@@ -218,13 +218,11 @@ class ITEEstimator(BaseEstimator):
         if X is None:
             X = self.X_test
         N_test = X.shape[0]
-        print(self.m1.predict_proba(X))
         try:
             if self.two_model:
                 self.y1_preds = self.m1.predict_proba(X)[:,1]
                 self.y0_preds = self.model.predict_proba(X)[:,1]
             else:
-
                 self.y1_preds = self.model.predict_proba(
                                     np.hstack((X,
                                     np.ones(N_test).reshape(-1,1))))[:,1]
