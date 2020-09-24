@@ -51,8 +51,8 @@ def expected_model_change_maximization(classifier, X_pool, n2, **kwargs):
     X_scaled = sc.fit_transform(classifier.X_training)
     # Fit approx model
     classifier.approx_model.fit(
-        X_scaled,
-        np.mean(ite_train_preds, axis=1))
+        X = X_scaled,
+        y = np.mean(ite_train_preds, axis=1))
     # Using list as it is faster than appending to np array
     query_idx = []
     # Using a loop for the combinatorial opt. part
