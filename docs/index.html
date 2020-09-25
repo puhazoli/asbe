@@ -89,11 +89,80 @@ If all the above are defined, you can construct an <a href="/asbe/core.html#ASLe
 
 <div class="inner_cell">
     <div class="input_area">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="n">X</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">size</span> <span class="o">=</span> <span class="mi">1000</span><span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">((</span><span class="mi">500</span><span class="p">,</span><span class="mi">2</span><span class="p">))</span>
-<span class="n">t</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">binomial</span><span class="p">(</span><span class="n">n</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span> <span class="n">p</span> <span class="o">=</span> <span class="mf">0.5</span><span class="p">,</span> <span class="n">size</span> <span class="o">=</span> <span class="mi">500</span><span class="p">)</span>
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">N</span> <span class="o">=</span> <span class="mi">1000</span>
+<span class="n">X</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">size</span> <span class="o">=</span> <span class="n">N</span><span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">((</span><span class="n">N</span><span class="o">/</span><span class="mi">2</span><span class="p">,</span><span class="mi">2</span><span class="p">))</span>
+<span class="n">t</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">binomial</span><span class="p">(</span><span class="n">n</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span> <span class="n">p</span> <span class="o">=</span> <span class="mf">0.5</span><span class="p">,</span> <span class="n">size</span> <span class="o">=</span> <span class="n">N</span><span class="o">/</span><span class="mi">2</span><span class="p">)</span>
 <span class="n">y</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">binomial</span><span class="p">(</span><span class="n">n</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span> <span class="n">p</span> <span class="o">=</span> <span class="mi">1</span><span class="o">/</span><span class="p">(</span><span class="mi">1</span><span class="o">+</span><span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">X</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">]</span><span class="o">*</span><span class="mi">2</span> <span class="o">+</span> <span class="n">t</span><span class="o">*</span><span class="mi">3</span><span class="p">)))</span>
-<span class="n">a</span> <span class="o">=</span> <span class="n">ITEEstimator</span><span class="p">(</span><span class="n">LogisticRegression</span><span class="p">())</span>
+<span class="n">a</span> <span class="o">=</span> <span class="n">ITEEstimator</span><span class="p">(</span><span class="n">LogisticRegression</span><span class="p">(</span><span class="n">solver</span><span class="o">=</span><span class="s2">&quot;lbfgs&quot;</span><span class="p">))</span>
 <span class="n">a</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">t</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    {% endraw %}
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Learning-actively">Learning actively<a class="anchor-link" href="#Learning-actively"> </a></h2><p>Similarly, you can create an <a href="/asbe/core.html#ASLearner"><code>ASLearner</code></a>, for which you will initialize the dataset and set the preferred modeling options. Let's see how it works:</p>
+<ul>
+<li>we will use XBART to model the treatment effect with a one-model approach</li>
+<li>we will use expected model change maximization<ul>
+<li>for that, we need an approximate model, we will use the <code>SGDRegressor</code></li>
+</ul>
+</li>
+</ul>
+<p>You can call <code>.fit()</code> on the <a href="/asbe/core.html#ASLearner"><code>ASLearner</code></a>, which will by default fit the training data supplied. To select new units from the pool, you just need to call the <code>query()</code> method, which will return the selected <code>X</code> and the <code>query_ix</code> of these units. <a href="/asbe/core.html#ASLearner"><code>ASLearner</code></a> expects the <code>n2</code> argument, which tells  how many units are queried at once. For sequential AL, we can set this to 1. Additionally, some query strategies can require different treatment effect estimates - EMCM needs uncertainty around the ITE. We can explicitly tell the the <a href="/asbe/core.html#ITEEstimator"><code>ITEEstimator</code></a> to return all the predicted treatment effects. 
+Then, we can teach the newly acquired units to the learner, by calling the <code>teach</code> function. The <code>score</code> function provides an evaluation of the given learner.</p>
+
+</div>
+</div>
+</div>
+    {% raw %}
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">from</span> <span class="nn">xbart</span> <span class="k">import</span> <span class="n">XBART</span>
+<span class="kn">from</span> <span class="nn">sklearn.model_selection</span> <span class="k">import</span> <span class="n">train_test_split</span>
+<span class="kn">from</span> <span class="nn">sklearn.linear_model</span> <span class="k">import</span> <span class="n">SGDRegressor</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    {% endraw %}
+
+    {% raw %}
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">X_train</span><span class="p">,</span> <span class="n">X_test</span><span class="p">,</span> <span class="n">t_train</span><span class="p">,</span> <span class="n">t_test</span><span class="p">,</span> <span class="n">y_train</span><span class="p">,</span> <span class="n">y_test</span> <span class="o">=</span> <span class="n">train_test_split</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">t</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">test_size</span><span class="o">=</span><span class="mf">0.8</span><span class="p">,</span>
+                                                                    <span class="n">random_state</span><span class="o">=</span><span class="mi">1005</span><span class="p">)</span>
+<span class="n">X_pool</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">copy</span><span class="p">(</span><span class="n">X_test</span><span class="p">)</span>
+<span class="n">asl</span> <span class="o">=</span> <span class="n">ASLearner</span><span class="p">(</span><span class="n">estimator</span> <span class="o">=</span> <span class="n">ITEEstimator</span><span class="p">(</span><span class="n">model</span> <span class="o">=</span> <span class="n">XBART</span><span class="p">(),</span>
+                                         <span class="n">two_model</span><span class="o">=</span><span class="kc">False</span><span class="p">),</span> 
+         <span class="n">query_strategy</span><span class="o">=</span><span class="n">expected_model_change_maximization</span><span class="p">,</span>
+         <span class="n">X_training</span> <span class="o">=</span> <span class="n">X_train</span><span class="p">,</span>
+         <span class="n">t_training</span> <span class="o">=</span> <span class="n">t_train</span><span class="p">,</span>
+         <span class="n">y_training</span> <span class="o">=</span> <span class="n">y_train</span><span class="p">,</span>
+         <span class="n">X_pool</span>     <span class="o">=</span> <span class="n">X_pool</span><span class="p">,</span>
+         <span class="n">X_test</span>     <span class="o">=</span> <span class="n">X_test</span><span class="p">,</span>
+         <span class="n">approx_model</span><span class="o">=</span><span class="n">SGDRegressor</span><span class="p">())</span>
+<span class="n">asl</span><span class="o">.</span><span class="n">fit</span><span class="p">()</span>
+<span class="n">X_new</span><span class="p">,</span> <span class="n">query_idx</span> <span class="o">=</span> <span class="n">asl</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="n">asl</span><span class="o">.</span><span class="n">X_pool</span><span class="p">,</span> <span class="n">n2</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">return_mean</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span>
+<span class="n">asl</span><span class="o">.</span><span class="n">teach</span><span class="p">(</span><span class="n">X_new</span><span class="p">,</span> <span class="n">t_test</span><span class="p">[</span><span class="n">query_idx</span><span class="p">],</span> <span class="n">y_test</span><span class="p">[</span><span class="n">query_idx</span><span class="p">])</span>
+<span class="n">preds</span><span class="p">,</span> <span class="o">*</span><span class="n">rest</span> <span class="o">=</span> <span class="n">asl</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">asl</span><span class="o">.</span><span class="n">X_test</span><span class="p">)</span>
+<span class="n">asl</span><span class="o">.</span><span class="n">score</span><span class="p">(</span><span class="n">preds</span><span class="p">,</span> <span class="n">y_test</span><span class="p">,</span> <span class="n">t_test</span><span class="p">)</span>
 </pre></div>
 
     </div>
@@ -105,11 +174,12 @@ If all the above are defined, you can construct an <a href="/asbe/core.html#ASLe
 
 <div class="output_area">
 
-<div class="output_subarea output_stream output_stderr output_text">
-<pre>/opt/anaconda3/lib/python3.7/site-packages/sklearn/linear_model/logistic.py:432: FutureWarning: Default solver will be changed to &#39;lbfgs&#39; in 0.22. Specify a solver to silence this warning.
-  FutureWarning)
-</pre>
+
+
+<div class="output_text output_subarea output_execute_result">
+<pre>0.190240308680396</pre>
 </div>
+
 </div>
 
 </div>
