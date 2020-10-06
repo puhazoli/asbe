@@ -10,7 +10,7 @@ from modAL.models.base import BaseLearner
 from sklearn.base import BaseEstimator, ClassifierMixin, RegressorMixin
 from sklearn.preprocessing import StandardScaler
 from sklearn.pipeline import make_pipeline
-from typing import Union, Optional
+from typing import Union, Optional, Callable
 from copy import deepcopy
 from pylift.eval import UpliftEval
 
@@ -41,7 +41,7 @@ def expected_model_change_maximization(classifier, X_pool, n2, **kwargs):
     ite_train_preds, y1_train_preds, y0_train_preds = \
         classifier.predict(classifier.X_training, **kwargs)
     if ite_train_preds.shape[1] < 1:
-        raise ValueError("The treatment effect does not uncertainty around it - \
+        raise ValueError("The treatment effect does not have uncertainty around it - \
                          consider using a different estimator")
     # Get mean of predicted ITE
     ite_pool_preds, y1_pool_preds, y0_pool_preds = \
@@ -169,33 +169,50 @@ class ITEEstimator(BaseEstimator):
     def __init__(self,
                  model: estimator_type = None,
                  two_model: bool = False,
+                 ps: Callable = None,
                  **kwargs
                 ) -> None:
         self.model = model
         self.two_model = two_model
+        self.ps_model = ps
+
+    def _fit_ps_model(self):
+        if self.ps_model is not None:
+            self.ps_model.fit(self.X_training, self.t_training)
 
     def fit(self,X_training: np.ndarray = None,
                  t_training: np.ndarray = None,
                  y_training: np.ndarray = None,
-                 X_test: np.ndarray = None):
+                 X_test: np.ndarray = None,
+                 ps_scores: np.ndarray = None):
+
         if X_training is not None:
             self.X_training = X_training
             self.y_training = y_training
             self.t_training = t_training
             self.X_test = X_test
         self.N_training = self.X_training.shape[0]
-        # if "N_training" not in self.__dict__:
+        try:
+            self._fit_ps_model()
+            ps_scores = self.ps_model.predict_proba(self.X_training)
+        except:
+            ps_scores = None
+            # if "N_training" not in self.__dict__:
         #     self.N_training = self.X_training.shape[0]
+        if ps_scores is not None:
+            X_to_train_on = np.hstack((self.X_training, ps_scores[:,1].reshape((-1, 1))))
+        else:
+            X_to_train_on = self.X_training
         if self.two_model:
             if hasattr(self, "m1") is False:
                 self.m1 = deepcopy(self.model)
             control_ix = np.where(self.t_training == 0)[0]
-            self.model.fit(self.X_training[control_ix,:],
+            self.model.fit(X_to_train_on[control_ix,:],
                            self.y_training[control_ix])
-            self.m1.fit(self.X_training[-control_ix,:],
+            self.m1.fit(X_to_train_on[-control_ix,:],
                         self.y_training[-control_ix])
         else:
-            self.model.fit(np.hstack((self.X_training,
+            self.model.fit(np.hstack((X_to_train_on,
                                       self.t_training.reshape((self.N_training, -1)))),
                            self.y_training)
 
@@ -215,6 +232,9 @@ class ITEEstimator(BaseEstimator):
     def predict(self, X=None, **kwargs):
         if X is None:
             X = self.X_test
+        if self.ps_model is not None and self.ps_model.coef_ is not None:
+            pred_ps_scores = self.ps_model.predict_proba(X)[:, 1]
+            X = np.hstack((X, pred_ps_scores.reshape(-1, 1)))
         N_test = X.shape[0]
         try:
             if self.two_model:
