@@ -50,9 +50,15 @@ def expected_model_change_maximization(classifier, X_pool, n2, **kwargs):
     sc = StandardScaler()
     X_scaled = sc.fit_transform(classifier.X_training)
     # Fit approx model
+    # calc type-s error
+    train_type_s_prob_1 = np.sum(ite_train_preds > 0, axis=1)/ite_train_preds.shape[1]
+    train_type_s = np.where(train_type_s_prob_1 > 0.5, 1-train_type_s_prob_1, train_type_s_prob_1) + .0001
+    pool_type_s_prob_1 = np.sum(ite_pool_preds > 0, axis=1)/ite_pool_preds.shape[1]
+    pool_type_s = np.where(pool_type_s_prob_1 > 0.5, 1-pool_type_s_prob_1, pool_type_s_prob_1) + .0001
     classifier.approx_model.fit(
         X = X_scaled,
-        y = np.mean(ite_train_preds, axis=1))
+        y = np.mean(ite_train_preds, axis=1),
+        sample_weight = 5*train_type_s)
     # Using list as it is faster than appending to np array
     query_idx = []
     # Using a loop for the combinatorial opt. part
@@ -85,7 +91,8 @@ def expected_model_change_maximization(classifier, X_pool, n2, **kwargs):
         query_idx.append(int(considered_ixes[np.argmax(grads)]))
         classifier.approx_model.partial_fit(
             sc.transform(X_pool[int(query_idx[ix])].reshape(1, -1)),
-            np.random.choice(ite_pool_preds[int(query_idx[ix])], size=1))
+            np.random.choice(ite_pool_preds[int(query_idx[ix])], size=1),
+            sample_weight = np.array(pool_type_s[int(query_idx[ix])]).ravel())
 
     return X_pool[query_idx], query_idx
 
