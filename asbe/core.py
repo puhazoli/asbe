@@ -126,7 +126,7 @@ class ASLearner(BaseLearner):
                                t_training  =        self.t_training,
                                X_test      =        self.X_test)
 
-    def teach(self, X_new, t_new, y_new):
+    def teach(self, X_new, t_new, y_new, **kwargs):
         """Teaching new instances to the estimator selected bu the query_strategy
 
         If no `assignment_fc` is added, all selected samples are used
@@ -134,8 +134,9 @@ class ASLearner(BaseLearner):
         $\hat{T} = T$
         """
         if self.assignment_fc is not None:
-            X_new, t_new, y_new = self.assignment_fc(self, X_new, t_new, y_new)
-        self._add_queried_data_class(X_new, t_new, y_new)
+            X_new, t_new, y_new = self.assignment_fc(self, X_new, t_new,
+                                                     y_new, simulated=kwargs["simulated"] if "simulated" in kwargs else False)
+        self._add_queried_data_class(X_new, t_new.ravel(), y_new.ravel())
         self.fit()
 
     def fit(self):
@@ -223,7 +224,7 @@ class ITEEstimator(BaseEstimator):
         return model.predict(X,
             return_mean = kwargs["return_mean"] if "return_mean" in kwargs else True)
 
-    def _fix_dim_pred(self,preds):
+    def _fix_dim_pred(self, preds):
         pred_length = preds.shape[0]
         if preds.shape[1] == 1:
             if np.all(preds == 0):
@@ -279,7 +280,8 @@ def variance_based_assf(classifier, X, t, y, simulated=False):
     if simulated:
         try:
             y = np.take_along_axis(y, t_assigned[:, None], axis=1)
-            usable_unit
+            t = t_assigned
+            usable_units = np.repeat(True, repeats=X.shape[0])
         except:
             raise ValueError("Potential outcomes are needed in a matrix with shape (n,2)")
     else:
