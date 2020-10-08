@@ -160,7 +160,10 @@ class ASLearner(BaseLearner):
         if metric == "Qini":
             upev = UpliftEval(t_true, y_true, self.preds[0] if preds is None else preds)
             self.scores = upev
-        return self.scores.q1_aqini
+            vscore = self.scores.q1_aqini
+        if metric == "PEHE":
+            vscore = np.sqrt(np.mean(np.square(preds - y_true)))
+        return vscore
 
 # Cell
 class ITEEstimator(BaseEstimator):
@@ -266,12 +269,19 @@ class ITEEstimator(BaseEstimator):
         return self.y1_preds - self.y0_preds, self.y1_preds, self.y0_preds
 
 # Cell
-def variance_based_assf(classifier, X, t, y):
+def variance_based_assf(classifier, X, t, y, simulated=False):
     ite_preds, y1_preds, y0_preds = classifier.predict(X, return_mean=False)
     if len(y1_preds.shape) <= 1:
             raise ValueError("Not possible to calculate variance with dim {}".format(y1_preds.shape))
     prop_score = np.var(y1_preds,axis=1)/(
         np.var(y1_preds, axis=1)+np.var(y0_preds,axis=1))
     t_assigned = np.random.binomial(1, prop_score)
-    usable_units = np.where(t_assigned == t)
+    if simulated:
+        try:
+            y = np.take_along_axis(y, t_assigned[:, None], axis=1)
+            usable_unit
+        except:
+            raise ValueError("Potential outcomes are needed in a matrix with shape (n,2)")
+    else:
+        usable_units = np.where(t_assigned == t)
     return X[usable_units], t[usable_units], y[usable_units]
