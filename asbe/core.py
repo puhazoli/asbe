@@ -37,8 +37,9 @@ def type_s_batch_sampling(classifier, X_pool, n2, **kwargs):
     "Select highest type-s"
     ite_preds, y1_preds, y_preds = classifier.predict(X_pool, **kwargs)
     prob_s = np.sum(ite_preds > 0, axis=1)/ite_preds.shape[1]
-    prob_s = np.where(pool_type_s_prob_1 > 0.5, 1-prob_s, prob_s) + .0001
-    query_idx = np.argsort(prob_s)[-n2:][::-1]
+    prob_s_sel = np.where(prob_s > 0.5, 1-prob_s, prob_s) + .0001
+    query_idx = np.argsort(prob_s_sel)[-n2:][::-1]
+
     return X_pool[query_idx], query_idx
 
 
@@ -101,7 +102,7 @@ def expected_model_change_maximization(classifier, X_pool, n2, **kwargs):
         classifier.approx_model.partial_fit(
             sc.transform(X_pool[int(query_idx[ix])].reshape(1, -1)),
             np.random.choice(ite_pool_preds[int(query_idx[ix])], size=1),
-            sample_weight = np.array(pool_type_s[int(query_idx[ix])]).ravel()
+            sample_weight = np.array(pool_type_s[int(query_idx[ix])]).ravel())
 
     return X_pool[query_idx], query_idx
 
