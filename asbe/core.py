@@ -155,9 +155,10 @@ class ASLearner(BaseLearner):
                 self, X_new, t_new,
                 y_new, simulated=kwargs["simulated"] if "simulated" in kwargs else False)
         else:
-            if "simulated" in kwargs:
-                if kwargs["simulated"]:
-                    y_new = np.take_along_axis(y_new, t_new[:, None], axis=1)
+            try:
+                y_new = np.take_along_axis(y_new, t_new[:, None], axis=1)
+            except:
+                pass
         self._add_queried_data_class(X_new, t_new.ravel(), y_new.ravel())
         self.fit()
 
@@ -251,9 +252,10 @@ class ITEEstimator(BaseEstimator):
         if preds.shape[1] == 1:
             if np.all(preds == 0):
                 preds = np.hstack((preds, np.ones(pred_length).reshape((-1,1))))
-            else:
+            elif np.all(preds == 1):
                 preds = np.hstack((preds, np.zeros(pred_length).reshape((-1,1))))
-        return preds[:,1]
+            preds = preds[:, ]
+        return preds
 
     def predict(self, X=None, **kwargs):
         if X is None:
