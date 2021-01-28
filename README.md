@@ -2,7 +2,7 @@
 > Code for using active learning and automatic stopping for designing experiments
 
 
-Created with nbdev by ZP
+Created with nbdev by Zoltan Puha
 
 ## Install
 
@@ -22,10 +22,14 @@ from sklearn.linear_model import LogisticRegression
 import numpy as np
 ```
 
+    /opt/anaconda3/lib/python3.7/site-packages/dask/dataframe/utils.py:14: FutureWarning: pandas.util.testing is deprecated. Use the functions in the public API at pandas.testing instead.
+      import pandas.util.testing as tm
+
+
 ```python
 N = 1000
-X = np.random.normal(size = N).reshape((N/2,2))
-t = np.random.binomial(n = 1, p = 0.5, size = N/2)
+X = np.random.normal(size = N).reshape((int(N/2),2))
+t = np.random.binomial(n = 1, p = 0.5, size = int(N/2))
 y = np.random.binomial(n = 1, p = 1/(1+np.exp(X[:, 1]*2 + t*3)))
 a = ITEEstimator(LogisticRegression(solver="lbfgs"))
 a.fit(X, t, y)

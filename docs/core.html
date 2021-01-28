@@ -32,6 +32,75 @@ nb_path: "00_core.ipynb"
     {% raw %}
     
 <div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%</span><span class="k">nbdev_hide</span>
+<span class="kn">from</span> <span class="nn">nbdev</span> <span class="k">import</span> <span class="o">*</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    {% endraw %}
+
+    {% raw %}
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%</span><span class="k">nbdev_default_export</span> core
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>Cells will be exported to asbe.core,
+unless a different module is specified after an export flag: `%nbdev_export special.module`
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    {% endraw %}
+
+    {% raw %}
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%</span><span class="k">nbdev_export</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+
+<span class="kn">from</span> <span class="nn">modAL.models.base</span> <span class="k">import</span> <span class="n">BaseLearner</span>
+<span class="kn">from</span> <span class="nn">sklearn.base</span> <span class="k">import</span> <span class="n">BaseEstimator</span><span class="p">,</span> <span class="n">ClassifierMixin</span><span class="p">,</span> <span class="n">RegressorMixin</span>
+<span class="kn">from</span> <span class="nn">sklearn.preprocessing</span> <span class="k">import</span> <span class="n">StandardScaler</span>
+<span class="kn">from</span> <span class="nn">sklearn.pipeline</span> <span class="k">import</span> <span class="n">make_pipeline</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="k">import</span> <span class="n">Union</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Callable</span>
+<span class="kn">from</span> <span class="nn">copy</span> <span class="k">import</span> <span class="n">deepcopy</span>
+<span class="kn">from</span> <span class="nn">pylift.eval</span> <span class="k">import</span> <span class="n">UpliftEval</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
 
 </div>
     {% endraw %}
@@ -58,79 +127,104 @@ nb_path: "00_core.ipynb"
     {% raw %}
     
 <div class="cell border-box-sizing code_cell rendered">
+<div class="input">
 
-</div>
-    {% endraw %}
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%</span><span class="k">nbdev_export</span>
+<span class="k">def</span> <span class="nf">random_batch_sampling</span><span class="p">(</span><span class="n">classifier</span><span class="p">,</span> <span class="n">X_pool</span><span class="p">,</span> <span class="n">n2</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="s2">&quot;Randomly sample a batch from a pool of unlabaled samples&quot;</span>
+    <span class="n">n_samples</span> <span class="o">=</span> <span class="n">X_pool</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">query_idx</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="n">n_samples</span><span class="p">),</span> <span class="n">size</span><span class="o">=</span><span class="n">n2</span><span class="p">,</span><span class="n">replace</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">X_pool</span><span class="p">[</span><span class="n">query_idx</span><span class="p">],</span> <span class="n">query_idx</span>
 
-    {% raw %}
+<span class="k">def</span> <span class="nf">uncertainty_batch_sampling</span><span class="p">(</span><span class="n">classifier</span><span class="p">,</span> <span class="n">X_pool</span><span class="p">,</span> <span class="n">n2</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="s2">&quot;Select the top $n_2$ most uncertain units&quot;</span>
+    <span class="n">ite_preds</span><span class="p">,</span> <span class="n">y1_preds</span><span class="p">,</span> <span class="n">y_preds</span> <span class="o">=</span> <span class="n">classifier</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">X_pool</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+    <span class="c1"># Calculate variance based on predicted</span>
+    <span class="k">if</span> <span class="n">y1_preds</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">&lt;=</span> <span class="mi">1</span> <span class="ow">or</span> \
+    <span class="nb">len</span><span class="p">(</span><span class="n">y1_preds</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s2">&quot;Not possible to calculate uncertainty when dimensions &lt;=1 &quot;</span><span class="p">)</span>
+    <span class="n">ite_vars</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">var</span><span class="p">(</span><span class="n">classifier</span><span class="o">.</span><span class="n">estimator</span><span class="o">.</span><span class="n">y1_preds</span> <span class="o">-</span> <span class="n">classifier</span><span class="o">.</span><span class="n">estimator</span><span class="o">.</span><span class="n">y0_preds</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">query_idx</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argsort</span><span class="p">(</span><span class="n">ite_vars</span><span class="p">)[</span><span class="o">-</span><span class="n">n2</span><span class="p">:][::</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+        
+    <span class="k">return</span> <span class="n">X_pool</span><span class="p">[</span><span class="n">query_idx</span><span class="p">],</span> <span class="n">query_idx</span>
+
+<span class="k">def</span> <span class="nf">type_s_batch_sampling</span><span class="p">(</span><span class="n">classifier</span><span class="p">,</span> <span class="n">X_pool</span><span class="p">,</span> <span class="n">n2</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="s2">&quot;Select highest type-s&quot;</span>
+    <span class="n">ite_preds</span><span class="p">,</span> <span class="n">y1_preds</span><span class="p">,</span> <span class="n">y_preds</span> <span class="o">=</span> <span class="n">classifier</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">X_pool</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+    <span class="n">prob_s</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">ite_preds</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span><span class="o">/</span><span class="n">ite_preds</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+    <span class="n">prob_s_sel</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">prob_s</span> <span class="o">&gt;</span> <span class="mf">0.5</span><span class="p">,</span> <span class="mi">1</span><span class="o">-</span><span class="n">prob_s</span><span class="p">,</span> <span class="n">prob_s</span><span class="p">)</span> <span class="o">+</span> <span class="o">.</span><span class="mi">0001</span>
+    <span class="n">query_idx</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argsort</span><span class="p">(</span><span class="n">prob_s_sel</span><span class="p">)[</span><span class="o">-</span><span class="n">n2</span><span class="p">:][::</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
     
-<div class="cell border-box-sizing code_cell rendered">
+    <span class="k">return</span> <span class="n">X_pool</span><span class="p">[</span><span class="n">query_idx</span><span class="p">],</span> <span class="n">query_idx</span>
+   
 
-<div class="output_wrapper">
-<div class="output">
+<span class="k">def</span> <span class="nf">expected_model_change_maximization</span><span class="p">(</span><span class="n">classifier</span><span class="p">,</span> <span class="n">X_pool</span><span class="p">,</span> <span class="n">n2</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Implementation of EMCM for ITE - using a surrogate SGD model.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># Get mean of the trained prediction</span>
+    <span class="n">ite_train_preds</span><span class="p">,</span> <span class="n">y1_train_preds</span><span class="p">,</span> <span class="n">y0_train_preds</span> <span class="o">=</span> \
+        <span class="n">classifier</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">classifier</span><span class="o">.</span><span class="n">X_training</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">ite_train_preds</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">&lt;</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;The treatment effect does not have uncertainty around it - </span><span class="se">\</span>
+<span class="s2">                         consider using a different estimator&quot;</span><span class="p">)</span>
+    <span class="c1"># Get mean of predicted ITE</span>
+    <span class="n">ite_pool_preds</span><span class="p">,</span> <span class="n">y1_pool_preds</span><span class="p">,</span> <span class="n">y0_pool_preds</span> <span class="o">=</span> \
+        <span class="n">classifier</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">X_pool</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+    <span class="c1"># Then scale the data so sgd works the best</span>
+    <span class="n">sc</span> <span class="o">=</span> <span class="n">StandardScaler</span><span class="p">()</span>
+    <span class="n">X_scaled</span> <span class="o">=</span> <span class="n">sc</span><span class="o">.</span><span class="n">fit_transform</span><span class="p">(</span><span class="n">classifier</span><span class="o">.</span><span class="n">X_training</span><span class="p">)</span>
+    <span class="c1"># Fit approx model</span>
+    <span class="c1"># calc type-s error</span>
+    <span class="n">train_type_s_prob_1</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">ite_train_preds</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span><span class="o">/</span><span class="n">ite_train_preds</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+    <span class="n">train_type_s</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">train_type_s_prob_1</span> <span class="o">&gt;</span> <span class="mf">0.5</span><span class="p">,</span> <span class="mi">1</span><span class="o">-</span><span class="n">train_type_s_prob_1</span><span class="p">,</span> <span class="n">train_type_s_prob_1</span><span class="p">)</span> <span class="o">+</span> <span class="o">.</span><span class="mi">0001</span>
+    <span class="n">pool_type_s_prob_1</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">ite_pool_preds</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span><span class="o">/</span><span class="n">ite_pool_preds</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+    <span class="n">pool_type_s</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">pool_type_s_prob_1</span> <span class="o">&gt;</span> <span class="mf">0.5</span><span class="p">,</span> <span class="mi">1</span><span class="o">-</span><span class="n">pool_type_s_prob_1</span><span class="p">,</span> <span class="n">pool_type_s_prob_1</span><span class="p">)</span> <span class="o">+</span> <span class="o">.</span><span class="mi">0001</span>
+    <span class="n">classifier</span><span class="o">.</span><span class="n">approx_model</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span>
+        <span class="n">X</span> <span class="o">=</span> <span class="n">X_scaled</span><span class="p">,</span>
+        <span class="n">y</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">ite_train_preds</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">),</span>
+        <span class="n">sample_weight</span> <span class="o">=</span> <span class="mi">5</span><span class="o">*</span><span class="n">train_type_s</span><span class="p">)</span>
+    <span class="c1"># Using list as it is faster than appending to np array</span>
+    <span class="n">query_idx</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="c1"># Using a loop for the combinatorial opt. part</span>
+    <span class="k">for</span> <span class="n">ix</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n2</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">n2</span> <span class="o">&gt;</span> <span class="p">(</span><span class="n">X_pool</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]):</span>
+            <span class="k">raise</span> <span class="ne">IndexError</span><span class="p">(</span><span class="s2">&quot;Too many samples are queried from the pool ($n_2 &gt; ||X_pool||$)&quot;</span><span class="p">)</span>
+        <span class="c1"># Select randomly from X_pool</span>
+        <span class="n">prob_sampling</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">((</span><span class="n">X_pool</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]))</span><span class="o">/</span><span class="p">(</span><span class="n">X_pool</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">-</span><span class="nb">len</span><span class="p">(</span><span class="n">query_idx</span><span class="p">))</span>
+        <span class="c1"># Set the probability of already selected samples to 0</span>
+        <span class="k">if</span> <span class="n">ix</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">prob_sampling</span><span class="p">[</span><span class="n">query_idx</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="c1"># B = 100 by default, can be modified by kwargs</span>
+        <span class="n">considered_ixes</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span><span class="n">X_pool</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
+                                         <span class="n">size</span> <span class="o">=</span> <span class="n">kwargs</span><span class="p">[</span><span class="s2">&quot;B&quot;</span><span class="p">]</span> <span class="k">if</span> <span class="s2">&quot;B&quot;</span> <span class="ow">in</span> <span class="n">kwargs</span> <span class="k">else</span> <span class="mi">100</span><span class="p">,</span>
+                                         <span class="n">replace</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> 
+                                         <span class="n">p</span><span class="o">=</span><span class="n">prob_sampling</span><span class="p">)</span>
+        <span class="c1"># Calculate the grads for all the </span>
+        <span class="n">grads</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([])</span>
+        <span class="k">for</span> <span class="n">considered_ix</span> <span class="ow">in</span> <span class="n">considered_ixes</span><span class="p">:</span>
+            <span class="n">new_X</span> <span class="o">=</span> <span class="n">sc</span><span class="o">.</span><span class="n">transform</span><span class="p">(</span><span class="n">X_pool</span><span class="p">[</span><span class="n">considered_ix</span><span class="p">]</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">))</span>
+            <span class="n">app_predicted_ite</span> <span class="o">=</span> <span class="n">classifier</span><span class="o">.</span><span class="n">approx_model</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">new_X</span><span class="p">)</span>
+            <span class="c1"># bootstrapping accroding to eq. 11 of Cai and Zhang</span>
+            <span class="n">true_ite</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span><span class="n">ite_pool_preds</span><span class="p">[</span><span class="n">considered_ix</span><span class="p">],</span>
+                                        <span class="n">size</span><span class="o">=</span><span class="n">kwargs</span><span class="p">[</span><span class="s2">&quot;K&quot;</span><span class="p">]</span> <span class="k">if</span> <span class="s2">&quot;K&quot;</span> <span class="ow">in</span> <span class="n">kwargs</span> <span class="k">else</span> <span class="mi">5</span><span class="p">)</span>
+            <span class="n">grad</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">kron</span><span class="p">((</span><span class="n">true_ite</span> <span class="o">-</span> <span class="n">app_predicted_ite</span><span class="p">),</span><span class="n">new_X</span><span class="p">)))</span>
+            <span class="n">grads</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">grads</span><span class="p">,</span> <span class="n">grad</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">grads</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">kwargs</span><span class="p">[</span><span class="s2">&quot;threshold&quot;</span><span class="p">]</span> <span class="k">if</span> <span class="s2">&quot;threshold&quot;</span> <span class="ow">in</span> <span class="n">kwargs</span> <span class="k">else</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">break</span>
+        <span class="n">classifier</span><span class="o">.</span><span class="n">model_change</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">classifier</span><span class="o">.</span><span class="n">model_change</span><span class="p">,</span><span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">grads</span><span class="p">))</span>
+        <span class="n">query_idx</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">considered_ixes</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">argmax</span><span class="p">(</span><span class="n">grads</span><span class="p">)]))</span>
+        <span class="n">classifier</span><span class="o">.</span><span class="n">approx_model</span><span class="o">.</span><span class="n">partial_fit</span><span class="p">(</span>
+            <span class="n">sc</span><span class="o">.</span><span class="n">transform</span><span class="p">(</span><span class="n">X_pool</span><span class="p">[</span><span class="nb">int</span><span class="p">(</span><span class="n">query_idx</span><span class="p">[</span><span class="n">ix</span><span class="p">])]</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)),</span>
+            <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span><span class="n">ite_pool_preds</span><span class="p">[</span><span class="nb">int</span><span class="p">(</span><span class="n">query_idx</span><span class="p">[</span><span class="n">ix</span><span class="p">])],</span> <span class="n">size</span><span class="o">=</span><span class="mi">1</span><span class="p">),</span>
+            <span class="n">sample_weight</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">pool_type_s</span><span class="p">[</span><span class="nb">int</span><span class="p">(</span><span class="n">query_idx</span><span class="p">[</span><span class="n">ix</span><span class="p">])])</span><span class="o">.</span><span class="n">ravel</span><span class="p">())</span>
+        
+    <span class="k">return</span> <span class="n">X_pool</span><span class="p">[</span><span class="n">query_idx</span><span class="p">],</span> <span class="n">query_idx</span>
+</pre></div>
 
-<div class="output_area">
-
-
-<div class="output_markdown rendered_html output_subarea ">
-<h4 id="random_batch_sampling" class="doc_header"><code>random_batch_sampling</code><a href="https://github.com/puhazoli/asbe/tree/master/asbe/core.py#L18" class="source_link" style="float:right">[source]</a></h4><blockquote><p><code>random_batch_sampling</code>(<strong><code>classifier</code></strong>, <strong><code>X_pool</code></strong>, <strong><code>n2</code></strong>, <strong>**<code>kwargs</code></strong>)</p>
-</blockquote>
-<p>Randomly sample a batch from a pool of unlabaled samples</p>
-
-</div>
-
-</div>
-
-</div>
-</div>
-
-</div>
-    {% endraw %}
-
-    {% raw %}
-    
-<div class="cell border-box-sizing code_cell rendered">
-
-<div class="output_wrapper">
-<div class="output">
-
-<div class="output_area">
-
-
-<div class="output_markdown rendered_html output_subarea ">
-<h4 id="uncertainty_batch_sampling" class="doc_header"><code>uncertainty_batch_sampling</code><a href="https://github.com/puhazoli/asbe/tree/master/asbe/core.py#L24" class="source_link" style="float:right">[source]</a></h4><blockquote><p><code>uncertainty_batch_sampling</code>(<strong><code>classifier</code></strong>, <strong><code>X_pool</code></strong>, <strong><code>n2</code></strong>, <strong>**<code>kwargs</code></strong>)</p>
-</blockquote>
-<p>Select the top $n_2$ most uncertain units</p>
-
-</div>
-
-</div>
-
-</div>
-</div>
-
-</div>
-    {% endraw %}
-
-    {% raw %}
-    
-<div class="cell border-box-sizing code_cell rendered">
-
-<div class="output_wrapper">
-<div class="output">
-
-<div class="output_area">
-
-
-<div class="output_markdown rendered_html output_subarea ">
-<h4 id="expected_model_change_maximization" class="doc_header"><code>expected_model_change_maximization</code><a href="https://github.com/puhazoli/asbe/tree/master/asbe/core.py#L36" class="source_link" style="float:right">[source]</a></h4><blockquote><p><code>expected_model_change_maximization</code>(<strong><code>classifier</code></strong>, <strong><code>X_pool</code></strong>, <strong><code>n2</code></strong>, <strong>**<code>kwargs</code></strong>)</p>
-</blockquote>
-<p>Implementation of EMCM for ITE - using a surrogate SGD model.</p>
-
-</div>
-
-</div>
-
+    </div>
 </div>
 </div>
 
@@ -166,6 +260,97 @@ nb_path: "00_core.ipynb"
     {% raw %}
     
 <div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%</span><span class="k">nbdev_export</span>
+<span class="n">estimator_type</span> <span class="o">=</span> <span class="n">ClassifierMixin</span>
+<span class="k">class</span> <span class="nc">ASLearner</span><span class="p">(</span><span class="n">BaseLearner</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;A(ctively)S(topping)Learner class for automatic stopping in batch-mode AL&quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>
+                 <span class="n">estimator</span><span class="p">:</span> <span class="n">estimator_type</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> 
+                 <span class="n">query_strategy</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                 <span class="n">assignment_fc</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                 <span class="n">X_training</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+                 <span class="n">t_training</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+                 <span class="n">y_training</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+                 <span class="n">X_pool</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+                 <span class="n">X_test</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+                 <span class="n">approx_model</span><span class="p">:</span> <span class="n">RegressorMixin</span> <span class="o">=</span> <span class="kc">None</span>
+                <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">estimator</span> <span class="o">=</span> <span class="n">estimator</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">query_strategy</span> <span class="o">=</span> <span class="n">query_strategy</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assignment_fc</span> <span class="o">=</span> <span class="n">assignment_fc</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">X_training</span> <span class="o">=</span> <span class="n">X_training</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">y_training</span> <span class="o">=</span> <span class="n">y_training</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">t_training</span> <span class="o">=</span> <span class="n">t_training</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">X_pool</span>     <span class="o">=</span> <span class="n">X_pool</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">X_test</span>     <span class="o">=</span> <span class="n">X_test</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">approx_model</span> <span class="o">=</span> <span class="n">approx_model</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">model_change</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([])</span>
+        
+    <span class="k">def</span> <span class="nf">_add_queried_data_class</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="n">t</span><span class="p">,</span> <span class="n">y</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">X_training</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">vstack</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">X_training</span><span class="p">,</span> <span class="n">X</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">t_training</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">t_training</span><span class="p">,</span> <span class="n">t</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">y_training</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">y_training</span><span class="p">,</span> <span class="n">y</span><span class="p">))</span>
+    
+    <span class="k">def</span> <span class="nf">_update_estimator_values</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">estimator</span><span class="o">.</span><span class="vm">__dict__</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">X_training</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">X_training</span><span class="p">,</span>
+                               <span class="n">y_training</span>  <span class="o">=</span>        <span class="bp">self</span><span class="o">.</span><span class="n">y_training</span><span class="p">,</span>
+                               <span class="n">t_training</span>  <span class="o">=</span>        <span class="bp">self</span><span class="o">.</span><span class="n">t_training</span><span class="p">,</span>
+                               <span class="n">X_test</span>      <span class="o">=</span>        <span class="bp">self</span><span class="o">.</span><span class="n">X_test</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">teach</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X_new</span><span class="p">,</span> <span class="n">t_new</span><span class="p">,</span> <span class="n">y_new</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Teaching new instances to the estimator selected bu the query_strategy</span>
+<span class="sd">        </span>
+<span class="sd">        If no `assignment_fc` is added, all selected samples are used</span>
+<span class="sd">        If assignment function is added, only those instances are used, where</span>
+<span class="sd">        $\hat{T} = T$</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">assignment_fc</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">X_new</span><span class="p">,</span> <span class="n">t_new</span><span class="p">,</span> <span class="n">y_new</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">assignment_fc</span><span class="p">(</span>
+                <span class="bp">self</span><span class="p">,</span> <span class="n">X_new</span><span class="p">,</span> <span class="n">t_new</span><span class="p">,</span>
+                <span class="n">y_new</span><span class="p">,</span> <span class="n">simulated</span><span class="o">=</span><span class="n">kwargs</span><span class="p">[</span><span class="s2">&quot;simulated&quot;</span><span class="p">]</span> <span class="k">if</span> <span class="s2">&quot;simulated&quot;</span> <span class="ow">in</span> <span class="n">kwargs</span> <span class="k">else</span> <span class="kc">False</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">y_new</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">take_along_axis</span><span class="p">(</span><span class="n">y_new</span><span class="p">,</span> <span class="n">t_new</span><span class="p">[:,</span> <span class="kc">None</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+            <span class="k">except</span><span class="p">:</span>
+                <span class="k">pass</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_add_queried_data_class</span><span class="p">(</span><span class="n">X_new</span><span class="p">,</span> <span class="n">t_new</span><span class="o">.</span><span class="n">ravel</span><span class="p">(),</span> <span class="n">y_new</span><span class="o">.</span><span class="n">ravel</span><span class="p">())</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">fit</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">fit</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_update_estimator_values</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">estimator</span><span class="o">.</span><span class="n">fit</span><span class="p">()</span>
+        
+    <span class="k">def</span> <span class="nf">predict</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Method for predicting treatment effects within Active Learning</span>
+<span class="sd">        </span>
+<span class="sd">        Default is to predict on the unlabeled pool&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">X</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s2">&quot;You need to supply an unlabeled pool of instances (with shape (-1,</span><span class="si">{}</span><span class="s2">))&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">X_training</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">preds</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">estimator</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">preds</span>
+    
+    <span class="k">def</span> <span class="nf">score</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">preds</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">y_true</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">t_true</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">metric</span> <span class="o">=</span> <span class="s2">&quot;Qini&quot;</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Scoring the predictions - either ITE or observed outcomes are needed.</span>
+<span class="sd">        </span>
+<span class="sd">        If observed outcomes are provided, the accompanying treatments are also needed.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">metric</span> <span class="o">==</span> <span class="s2">&quot;Qini&quot;</span><span class="p">:</span>
+            <span class="n">upev</span> <span class="o">=</span> <span class="n">UpliftEval</span><span class="p">(</span><span class="n">t_true</span><span class="p">,</span> <span class="n">y_true</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">preds</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">if</span> <span class="n">preds</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">preds</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">scores</span> <span class="o">=</span> <span class="n">upev</span>
+            <span class="n">vscore</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">scores</span><span class="o">.</span><span class="n">q1_aqini</span>
+        <span class="k">if</span> <span class="n">metric</span> <span class="o">==</span> <span class="s2">&quot;PEHE&quot;</span><span class="p">:</span>
+            <span class="n">vscore</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">square</span><span class="p">(</span><span class="n">preds</span> <span class="o">-</span> <span class="n">y_true</span><span class="p">)))</span>
+        <span class="k">return</span> <span class="n">vscore</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
 
 </div>
     {% endraw %}
@@ -173,54 +358,116 @@ nb_path: "00_core.ipynb"
     {% raw %}
     
 <div class="cell border-box-sizing code_cell rendered">
+<div class="input">
 
-<div class="output_wrapper">
-<div class="output">
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%</span><span class="k">nbdev_export</span>
+<span class="k">class</span> <span class="nc">ITEEstimator</span><span class="p">(</span><span class="n">BaseEstimator</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Class for building a naive estimator for ITE estimation</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>
+                 <span class="n">model</span><span class="p">:</span> <span class="n">estimator_type</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+                 <span class="n">two_model</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+                 <span class="n">ps</span><span class="p">:</span> <span class="n">Callable</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+                 <span class="o">**</span><span class="n">kwargs</span>
+                <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">model</span> <span class="o">=</span> <span class="n">model</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">two_model</span> <span class="o">=</span> <span class="n">two_model</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ps_model</span> <span class="o">=</span> <span class="n">ps</span>
+        
+    <span class="k">def</span> <span class="nf">_fit_ps_model</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">ps_model</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">ps_model</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">X_training</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">t_training</span><span class="p">)</span>
 
-<div class="output_area">
-
-
-<div class="output_markdown rendered_html output_subarea ">
-<h2 id="ASLearner" class="doc_header"><code>class</code> <code>ASLearner</code><a href="https://github.com/puhazoli/asbe/tree/master/asbe/core.py#L94" class="source_link" style="float:right">[source]</a></h2><blockquote><p><code>ASLearner</code>(<strong><code>estimator</code></strong>:<code>ClassifierMixin</code>=<em><code>None</code></em>, <strong><code>query_strategy</code></strong>=<em><code>None</code></em>, <strong><code>assignment_fc</code></strong>=<em><code>None</code></em>, <strong><code>X_training</code></strong>:<code>ndarray</code>=<em><code>None</code></em>, <strong><code>t_training</code></strong>:<code>ndarray</code>=<em><code>None</code></em>, <strong><code>y_training</code></strong>:<code>ndarray</code>=<em><code>None</code></em>, <strong><code>X_pool</code></strong>:<code>ndarray</code>=<em><code>None</code></em>, <strong><code>X_test</code></strong>:<code>ndarray</code>=<em><code>None</code></em>, <strong><code>approx_model</code></strong>:<code>RegressorMixin</code>=<em><code>None</code></em>) :: <code>BaseLearner</code></p>
-</blockquote>
-<p>A(ctively)S(topping)Learner class for automatic stopping in batch-mode AL</p>
-
-</div>
-
-</div>
-
-</div>
-</div>
-
-</div>
-    {% endraw %}
-
-    {% raw %}
+    <span class="k">def</span> <span class="nf">fit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">X_training</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+                 <span class="n">t_training</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+                 <span class="n">y_training</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+                 <span class="n">X_test</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+                 <span class="n">ps_scores</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+            
+        <span class="k">if</span> <span class="n">X_training</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">X_training</span> <span class="o">=</span> <span class="n">X_training</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">y_training</span> <span class="o">=</span> <span class="n">y_training</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">t_training</span> <span class="o">=</span> <span class="n">t_training</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">X_test</span> <span class="o">=</span> <span class="n">X_test</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">N_training</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">X_training</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_fit_ps_model</span><span class="p">()</span>
+            <span class="n">ps_scores</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ps_model</span><span class="o">.</span><span class="n">predict_proba</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">X_training</span><span class="p">)</span>
+        <span class="k">except</span><span class="p">:</span>
+            <span class="n">ps_scores</span> <span class="o">=</span> <span class="kc">None</span>
+            <span class="c1"># if &quot;N_training&quot; not in self.__dict__:</span>
+        <span class="c1">#     self.N_training = self.X_training.shape[0]</span>
+        <span class="k">if</span> <span class="n">ps_scores</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">X_to_train_on</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">hstack</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">X_training</span><span class="p">,</span> <span class="n">ps_scores</span><span class="p">[:,</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">reshape</span><span class="p">((</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">))))</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">X_to_train_on</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">X_training</span>                
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">two_model</span><span class="p">:</span>
+            <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;m1&quot;</span><span class="p">)</span> <span class="ow">is</span> <span class="kc">False</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">m1</span> <span class="o">=</span> <span class="n">deepcopy</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">)</span>
+            <span class="n">control_ix</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">t_training</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X_to_train_on</span><span class="p">[</span><span class="n">control_ix</span><span class="p">,:],</span>
+                           <span class="bp">self</span><span class="o">.</span><span class="n">y_training</span><span class="p">[</span><span class="n">control_ix</span><span class="p">])</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">m1</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X_to_train_on</span><span class="p">[</span><span class="o">-</span><span class="n">control_ix</span><span class="p">,:],</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">y_training</span><span class="p">[</span><span class="o">-</span><span class="n">control_ix</span><span class="p">])</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">hstack</span><span class="p">((</span><span class="n">X_to_train_on</span><span class="p">,</span>
+                                      <span class="bp">self</span><span class="o">.</span><span class="n">t_training</span><span class="o">.</span><span class="n">reshape</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">N_training</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)))),</span>
+                           <span class="bp">self</span><span class="o">.</span><span class="n">y_training</span><span class="p">)</span>
+            
+    <span class="k">def</span> <span class="nf">_predict_without_proba</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">model</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">X</span><span class="p">,</span>
+            <span class="n">return_mean</span> <span class="o">=</span> <span class="n">kwargs</span><span class="p">[</span><span class="s2">&quot;return_mean&quot;</span><span class="p">]</span> <span class="k">if</span> <span class="s2">&quot;return_mean&quot;</span> <span class="ow">in</span> <span class="n">kwargs</span> <span class="k">else</span> <span class="kc">True</span><span class="p">)</span>
     
-<div class="cell border-box-sizing code_cell rendered">
-
-</div>
-    {% endraw %}
-
-    {% raw %}
+    <span class="k">def</span> <span class="nf">_fix_dim_pred</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">preds</span><span class="p">):</span>
+        <span class="n">pred_length</span> <span class="o">=</span> <span class="n">preds</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">preds</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">preds</span> <span class="o">==</span> <span class="mi">0</span><span class="p">):</span>
+                <span class="n">preds</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">hstack</span><span class="p">((</span><span class="n">preds</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">pred_length</span><span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">((</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">))))</span>
+            <span class="k">elif</span> <span class="n">np</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">preds</span> <span class="o">==</span> <span class="mi">1</span><span class="p">):</span> 
+                <span class="n">preds</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">hstack</span><span class="p">((</span><span class="n">preds</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">pred_length</span><span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">((</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">))))</span>
+            <span class="n">preds</span> <span class="o">=</span> <span class="n">preds</span><span class="p">[:,</span> <span class="p">]</span>
+        <span class="k">return</span> <span class="n">preds</span>         
     
-<div class="cell border-box-sizing code_cell rendered">
+    <span class="k">def</span> <span class="nf">predict</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">X</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">X</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">X_test</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">ps_model</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">ps_model</span><span class="o">.</span><span class="n">coef_</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">pred_ps_scores</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ps_model</span><span class="o">.</span><span class="n">predict_proba</span><span class="p">(</span><span class="n">X</span><span class="p">)[:,</span> <span class="mi">1</span><span class="p">]</span>
+            <span class="n">X</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">hstack</span><span class="p">((</span><span class="n">X</span><span class="p">,</span> <span class="n">pred_ps_scores</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)))</span>
+        <span class="n">N_test</span> <span class="o">=</span> <span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">two_model</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">y1_preds</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">m1</span><span class="o">.</span><span class="n">predict_proba</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">y0_preds</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">predict_proba</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">y1_preds</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">predict_proba</span><span class="p">(</span>
+                                    <span class="n">np</span><span class="o">.</span><span class="n">hstack</span><span class="p">((</span><span class="n">X</span><span class="p">,</span>
+                                    <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">N_test</span><span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">))))</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">y0_preds</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">predict_proba</span><span class="p">(</span>
+                    <span class="n">np</span><span class="o">.</span><span class="n">hstack</span><span class="p">((</span><span class="n">X</span><span class="p">,</span>
+                               <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">N_test</span><span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">))))</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">y1_preds</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_fix_dim_pred</span><span class="p">(</span> <span class="bp">self</span><span class="o">.</span><span class="n">y1_preds</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">y0_preds</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_fix_dim_pred</span><span class="p">(</span> <span class="bp">self</span><span class="o">.</span><span class="n">y0_preds</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">AttributeError</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">two_model</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">y1_preds</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_predict_without_proba</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">m1</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">y0_preds</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_predict_without_proba</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+                <span class="k">else</span><span class="p">:</span> 
+                    <span class="bp">self</span><span class="o">.</span><span class="n">y1_preds</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_predict_without_proba</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">,</span>
+                             <span class="n">np</span><span class="o">.</span><span class="n">hstack</span><span class="p">((</span><span class="n">X</span><span class="p">,</span>
+                             <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">N_test</span><span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">))),</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">y0_preds</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_predict_without_proba</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">,</span>
+                        <span class="n">np</span><span class="o">.</span><span class="n">hstack</span><span class="p">((</span><span class="n">X</span><span class="p">,</span>
+                                   <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">N_test</span><span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">))),</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+            <span class="k">except</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">AttributeError</span><span class="p">(</span><span class="s2">&quot;No method found for predicting with the supplied class&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">y1_preds</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">y0_preds</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">y1_preds</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">y0_preds</span>
+</pre></div>
 
-<div class="output_wrapper">
-<div class="output">
-
-<div class="output_area">
-
-
-<div class="output_markdown rendered_html output_subarea ">
-<h2 id="ITEEstimator" class="doc_header"><code>class</code> <code>ITEEstimator</code><a href="https://github.com/puhazoli/asbe/tree/master/asbe/core.py#L166" class="source_link" style="float:right">[source]</a></h2><blockquote><p><code>ITEEstimator</code>(<strong><code>model</code></strong>:<code>ClassifierMixin</code>=<em><code>None</code></em>, <strong><code>two_model</code></strong>:<code>bool</code>=<em><code>False</code></em>, <strong>**<code>kwargs</code></strong>) :: <code>BaseEstimator</code></p>
-</blockquote>
-<p>Class for building a naive estimator for ITE estimation</p>
-
-</div>
-
-</div>
-
+    </div>
 </div>
 </div>
 
@@ -240,7 +487,7 @@ nb_path: "00_core.ipynb"
 <span class="n">X_test</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">size</span> <span class="o">=</span> <span class="mi">200</span><span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">((</span><span class="mi">100</span><span class="p">,</span><span class="mi">2</span><span class="p">))</span>
 <span class="n">t_test</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">binomial</span><span class="p">(</span><span class="n">n</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span> <span class="n">p</span> <span class="o">=</span> <span class="mf">0.5</span><span class="p">,</span> <span class="n">size</span> <span class="o">=</span> <span class="mi">100</span><span class="p">)</span>
 <span class="n">y_test</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">binomial</span><span class="p">(</span><span class="n">n</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span> <span class="n">p</span> <span class="o">=</span> <span class="mi">1</span><span class="o">/</span><span class="p">(</span><span class="mi">1</span><span class="o">+</span><span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">X_test</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">]</span><span class="o">*</span><span class="mi">2</span> <span class="o">+</span> <span class="n">t_test</span><span class="o">*</span><span class="mi">3</span><span class="p">)))</span>
-<span class="n">a</span> <span class="o">=</span> <span class="n">ITEEstimator</span><span class="p">(</span><span class="n">LogisticRegression</span><span class="p">(</span><span class="n">solver</span><span class="o">=</span><span class="s2">&quot;lbfgs&quot;</span><span class="p">),</span> <span class="n">two_model</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span>
+<span class="n">a</span> <span class="o">=</span> <span class="n">ITEEstimator</span><span class="p">(</span><span class="n">LogisticRegression</span><span class="p">(</span><span class="n">solver</span><span class="o">=</span><span class="s2">&quot;lbfgs&quot;</span><span class="p">),</span> <span class="n">two_model</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span> <span class="n">ps</span><span class="o">=</span><span class="n">LogisticRegression</span><span class="p">())</span>
 <span class="n">a</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">t</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
 <span class="k">assert</span> <span class="nb">type</span><span class="p">(</span><span class="n">a</span><span class="o">.</span><span class="n">model</span><span class="p">)</span> <span class="o">==</span> <span class="n">LogisticRegression</span>  <span class="c1"># test assigning a model</span>
 <span class="k">assert</span> <span class="n">a</span><span class="o">.</span><span class="n">X_training</span><span class="o">.</span><span class="n">shape</span>  <span class="o">==</span> <span class="p">(</span><span class="mi">500</span><span class="p">,</span><span class="mi">2</span><span class="p">)</span>       <span class="c1"># test data passing for class</span>
@@ -248,6 +495,21 @@ nb_path: "00_core.ipynb"
 </pre></div>
 
     </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stderr output_text">
+<pre>/opt/anaconda3/lib/python3.7/site-packages/sklearn/linear_model/logistic.py:432: FutureWarning: Default solver will be changed to &#39;lbfgs&#39; in 0.22. Specify a solver to silence this warning.
+  FutureWarning)
+</pre>
+</div>
+</div>
+
 </div>
 </div>
 
@@ -274,28 +536,31 @@ nb_path: "00_core.ipynb"
     {% raw %}
     
 <div class="cell border-box-sizing code_cell rendered">
+<div class="input">
 
-</div>
-    {% endraw %}
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%</span><span class="k">nbdev_export</span>
+<span class="k">def</span> <span class="nf">variance_based_assf</span><span class="p">(</span><span class="n">classifier</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="n">t</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">simulated</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+    <span class="n">ite_preds</span><span class="p">,</span> <span class="n">y1_preds</span><span class="p">,</span> <span class="n">y0_preds</span> <span class="o">=</span> <span class="n">classifier</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">return_mean</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">y1_preds</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Not possible to calculate variance with dim </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">y1_preds</span><span class="o">.</span><span class="n">shape</span><span class="p">))</span>
+    <span class="n">prop_score</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">var</span><span class="p">(</span><span class="n">y1_preds</span><span class="p">,</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span><span class="o">/</span><span class="p">(</span>
+        <span class="n">np</span><span class="o">.</span><span class="n">var</span><span class="p">(</span><span class="n">y1_preds</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span><span class="o">+</span><span class="n">np</span><span class="o">.</span><span class="n">var</span><span class="p">(</span><span class="n">y0_preds</span><span class="p">,</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">))</span>
+    <span class="n">t_assigned</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">binomial</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">prop_score</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">simulated</span><span class="p">:</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">y</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">take_along_axis</span><span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="n">t_assigned</span><span class="p">[:,</span> <span class="kc">None</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+            <span class="n">t</span> <span class="o">=</span> <span class="n">t_assigned</span>
+            <span class="n">usable_units</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">repeat</span><span class="p">(</span><span class="kc">True</span><span class="p">,</span> <span class="n">repeats</span><span class="o">=</span><span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+        <span class="k">except</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Potential outcomes are needed in a matrix with shape (n,2)&quot;</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">usable_units</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">t_assigned</span> <span class="o">==</span> <span class="n">t</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">X</span><span class="p">[</span><span class="n">usable_units</span><span class="p">],</span> <span class="n">t</span><span class="p">[</span><span class="n">usable_units</span><span class="p">],</span> <span class="n">y</span><span class="p">[</span><span class="n">usable_units</span><span class="p">]</span>
+</pre></div>
 
-    {% raw %}
-    
-<div class="cell border-box-sizing code_cell rendered">
-
-<div class="output_wrapper">
-<div class="output">
-
-<div class="output_area">
-
-
-<div class="output_markdown rendered_html output_subarea ">
-<h4 id="variance_based_assf" class="doc_header"><code>variance_based_assf</code><a href="https://github.com/puhazoli/asbe/tree/master/asbe/core.py#L249" class="source_link" style="float:right">[source]</a></h4><blockquote><p><code>variance_based_assf</code>(<strong><code>classifier</code></strong>, <strong><code>X</code></strong>, <strong><code>t</code></strong>, <strong><code>y</code></strong>)</p>
-</blockquote>
-
-</div>
-
-</div>
-
+    </div>
 </div>
 </div>
 
@@ -370,19 +635,26 @@ nb_path: "00_core.ipynb"
 
 
 <div class="output_text output_subarea output_execute_result">
-<pre>array([[-0.11027421, -0.02568711, -0.28425158, ..., -0.03462116,
-        -0.20982067, -0.15963192],
-       [-0.58627519, -0.49946294, -0.65369759, ..., -0.50633243,
-        -0.59509201, -0.59366983],
-       [-0.64583275, -0.36099956, -0.63449251, ..., -0.45409067,
-        -0.46588398, -0.59366983],
-       ...,
-       [-0.64583275, -0.52078312, -0.63449251, ..., -0.50633243,
-        -0.46588398, -0.59366983],
-       [-0.64583275, -0.49946294, -0.63449251, ..., -0.6470443 ,
-        -0.59509201, -0.59366983],
-       [-0.15584266,  0.0624286 , -0.2650465 , ..., -0.03462116,
-        -0.25361454, -0.15963192]])</pre>
+<pre>array([-0.08178912, -0.09570422, -0.48961708, -0.08521253, -0.48338074,
+       -0.16149747, -0.48354472, -0.46430897, -0.54538151, -0.10013499,
+       -0.46355659, -0.15147128, -0.48792031, -0.45478962, -0.18321495,
+       -0.08830742, -0.45742293, -0.49161817, -0.57195395, -0.45047163,
+       -0.46635714, -0.39123347, -0.20259508, -0.41881421, -0.15502709,
+       -0.14932396, -0.16829883, -0.41912065, -0.08973207, -0.15900248,
+       -0.47903894, -0.44963399, -0.34601501, -0.46389063, -0.35386757,
+       -0.08129961, -0.08129961, -0.42081052, -0.120353  , -0.24373956,
+       -0.56775525, -0.43618272, -0.0859698 , -0.5036873 , -0.15900248,
+       -0.53548703, -0.54215832, -0.08426844, -0.52866698, -0.53139835,
+       -0.26042643, -0.53856146, -0.41938873, -0.08472306, -0.22376852,
+       -0.46323065, -0.46323065, -0.40293303, -0.54152665, -0.5636839 ,
+       -0.45488564, -0.08426844, -0.08158473, -0.48548627, -0.08830742,
+       -0.39223314, -0.14247007, -0.47575616, -0.40443561, -0.08640752,
+       -0.13730815, -0.08830742, -0.08830742, -0.48229777, -0.47061751,
+       -0.44572374, -0.52866698, -0.39089571, -0.15703981, -0.16578745,
+       -0.329113  , -0.17187722, -0.10424399, -0.37669155, -0.11767176,
+       -0.46383898, -0.43255414, -0.44572374, -0.5503485 , -0.1548253 ,
+       -0.15900248, -0.18363371, -0.1269284 , -0.16650847, -0.3336542 ,
+       -0.1269284 , -0.47213685, -0.21772306, -0.46635714, -0.32728796])</pre>
 </div>
 
 </div>
