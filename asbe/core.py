@@ -181,12 +181,18 @@ class ASLearner(BaseLearner):
 
         If observed outcomes are provided, the accompanying treatments are also needed.
         """
+        if metric not in ["Qini", "PEHE", "Cgains"]:
+            raise ValueError(f"Please use a valid error (PEHE, Qini, Cgains), {metric} is not valid")
         if metric == "Qini":
             upev = UpliftEval(t_true, y_true, self.preds[0] if preds is None else preds)
             self.scores = upev
             vscore = self.scores.q1_aqini
         if metric == "PEHE":
             vscore = np.sqrt(np.mean(np.square(preds - y_true)))
+        if metric == "Cgains":
+            upev = UpliftEval(t_true, y_true, self.preds[0] if preds is None else preds)
+            self.scores = upev
+            vscore = self.scores.cgains
         return vscore
 
 # Cell
