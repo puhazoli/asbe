@@ -193,6 +193,9 @@ class ASLearner(BaseLearner):
             upev = UpliftEval(t_true, y_true, self.preds[0] if preds is None else preds)
             self.scores = upev
             vscore = self.scores.cgains
+        if metric == "aqini_y":
+            upev = UpliftEval(t_true, y_true, self.preds[0] if preds is None else preds)
+            vscore = upev.aqini_y
         return vscore
 
 # Cell
