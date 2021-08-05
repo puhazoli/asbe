@@ -2,16 +2,21 @@
 
 __all__ = ["index", "modules", "custom_doc_links", "git_url"]
 
-index = {"random_batch_sampling": "00_core.ipynb",
-         "uncertainty_batch_sampling": "00_core.ipynb",
-         "type_s_batch_sampling": "00_core.ipynb",
-         "expected_model_change_maximization": "00_core.ipynb",
-         "ASLearner": "00_core.ipynb",
-         "estimator_type": "00_core.ipynb",
-         "ITEEstimator": "00_core.ipynb",
-         "variance_based_assf": "00_core.ipynb"}
+index = {"BaseITEEstimator": "00_base.ipynb",
+         "BaseActiveLearner": "00_base.ipynb",
+         "BaseAcquisitionFunction": "00_base.ipynb",
+         "BaseAssignmentFunction": "00_base.ipynb",
+         "random_batch_sampling": "01_core.ipynb",
+         "uncertainty_batch_sampling": "01_core.ipynb",
+         "type_s_batch_sampling": "01_core.ipynb",
+         "expected_model_change_maximization": "01_core.ipynb",
+         "ASLearner": "01_core.ipynb",
+         "estimator_type": "01_core.ipynb",
+         "ITEEstimator": "01_core.ipynb",
+         "variance_based_assf": "01_core.ipynb"}
 
-modules = ["core.py"]
+modules = ["base.py",
+           "core.py"]
 
 doc_url = "https://puhazoli.github.io/asbe/"
 
