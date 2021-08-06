@@ -49,16 +49,13 @@ class BaseITEEstimator(BaseEstimator):
                 raise ValueError(f"Shape of propensiry scores is {ps_scores.shape},instead of (-1,1)")
 
         X_t_training = np.hstack((X_training, t_training.reshape(-1,1)))
-        if self.two_model is False or two_model is None:
+        if self.two_model is False or self.two_model is None:
             self.model.fit(X_t_training, y_training)
         else:
-            try:
-                self.model.fit(X_t_training, y_training)
-            except:
-                control_ix = np.where(self.t_training == 0)[0]
-                self.m1 = deepcopy(self.model)
-                self.model.fit(X_training[control_ix,:], y_training[control_ix])
-                self.m1.fit(X_training[-control_ix,:],   y_training[-control_ix])
+            control_ix = np.where(t_training == 0)[0]
+            self.m1 = deepcopy(self.model)
+            self.model.fit(X_training[control_ix,:], y_training[control_ix])
+            self.m1.fit(X_training[-control_ix,:],   y_training[-control_ix])
 
     def _predict_bin_or_con(self, model, X):
         if self.proba:
@@ -101,16 +98,27 @@ class BaseActiveLearner(BaseEstimator):
     def __init__(self,
                  estimator: BaseEstimator,
                  acquisition_function: Callable,
-                 assignment_function: Union[Callable, None],
-                 stopping_function: Union[Callable, None],
+                 assignment_function: Union[Callable, list, None],
+                 stopping_function: Union[Callable, list, None],
                  dataset: dict,
+                 al_steps: int = 1,
                  **kwargs
                 ) -> None:
         self.estimator = estimator
-        self.acquisition_function = acquisition_function
-        self.assignment_function = assignment_function
+        if type(acquisition_function) is list:
+            self.acquisition_function_list = acquisition_function
+        else:
+            self.acquisition_function = acquisition_function
+            self.acquisition_function_list = []
+        if type(assignment_function) is list:
+            self.assignment_function_list = assignment_function
+        else:
+            self.assignment_function = assignment_function
+            self.assignment_function_list = []
         self.stopping_function = stopping_function
-        self.dataset = dataset
+        self.dataset = deepcopy(dataset)
+        self.al_steps = al_steps
+        self.current_step = 0
 
     def _update_dataset(self, query_idx, treatment, **kwargs):
         """Moves data with query_idx indices from pool to training"""
@@ -140,15 +148,29 @@ class BaseActiveLearner(BaseEstimator):
     def predict(self, X):
         self.estimator.predict(X)
 
-    def query(self, no_query = None):
+    def query(self, no_query = None, acquisition_function = None):
         """Main function to get labels of datapoints"""
-        query_idx = self.acquisition_function.select_data(self.estimator,
+        if len(self.acquisition_function_list) == 0:
+            if acquisition_function is None:
+                acquisition_function = self.acquisition_function
+        else:
+            if acquisition_function is None:
+                acquisition_function = self.acquisition_function
+        query_idx = acquisition_function.select_data(self.estimator,
                                                           self.dataset,
                                                           no_query)
         return query_idx
 
-    def teach(self, query_idx, **kwargs):
-        treatment = self.assignment_function.select_treatment(self.estimator,
+    def teach(self, query_idx, assignment_function = None, **kwargs):
+        if len(self.assignment_function_list) == 0:
+            if assignment_function is None:
+                assignment_function = self.assignment_function
+            else:
+                raise ValueError("No assignment function provided")
+        else:
+            if assignment_function is None:
+                assignment_function = self.assignment_function
+        treatment = assignment_function.select_treatment(self.estimator,
                                                               self.dataset,
                                                               query_idx)
         matching = treatment == self.dataset["t_pool"][query_idx]
@@ -171,17 +193,44 @@ class BaseActiveLearner(BaseEstimator):
                 raise Error("Check if dataset contains true ITE values")
         return sc
 
+    def simulate(self, no_query: int = None) -> dict:
+        ds = deepcopy(self.dataset)
+        est = deepcopy(self.estimator)
+        res = {}
+        if len(self.acquisition_function_list) == 0:
+            laf = [self.acquisition_function]
+        else:
+            laf = self.acquisition_function_list
+        for af in laf:
+            if no_query is None:
+                no_query = af.no_query
+            self.dataset = deepcopy(ds)
+            self.estimator = deepcopy(est)
+            self.current_step = 0
+            res[af.name] = {}
+            for i in range(1, self.al_steps+1):
+                self.fit()
+                X_new, query_idx = self.query(no_query=no_query, acquisition_function = af)
+                self.teach(query_idx)
+                preds = self.predict(self.dataset["X_test"])
+                res[af.name][i] = self.score()
+                self.current_step += 1
+        return res
+
 # Cell
 class BaseAcquisitionFunction():
     """Base class for acquisition functions"""
     def __init__(self,
                 no_query: int = 1,
-                method: str = "top") -> None:
+                method: str = "top",
+                name: str = "base") -> None:
         self.no_query = no_query
         self.method = method
+        self.name = name + "_" + str(no_query)
 
     def calculate_metrics(self, model, dataset) -> np.array:
-        return model.predict(dataset["X_pool"])
+        #return model.predict(dataset["X_pool"])
+        return np.arange(dataset["X_pool"].shape[0])
 
     def select_data(self, model, dataset, no_query):
         if no_query is None:
