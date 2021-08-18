@@ -6,6 +6,12 @@ index = {"BaseITEEstimator": "00_base.ipynb",
          "BaseActiveLearner": "00_base.ipynb",
          "BaseAcquisitionFunction": "00_base.ipynb",
          "BaseAssignmentFunction": "00_base.ipynb",
+         "RandomAcquisitionFunction": "01_core.ipynb",
+         "UncertaintyAcquisitionFunction": "01_core.ipynb",
+         "TypeSAcquistionFunction": "01_core.ipynb",
+         "EMCMAcquisitionFunction": "01_core.ipynb",
+         "RandomAssignmentFunction": "01_core.ipynb",
+         "MajorityAssignmentFunction": "01_core.ipynb",
          "random_batch_sampling": "01_core.ipynb",
          "uncertainty_batch_sampling": "01_core.ipynb",
          "type_s_batch_sampling": "01_core.ipynb",
@@ -16,7 +22,7 @@ index = {"BaseITEEstimator": "00_base.ipynb",
          "variance_based_assf": "01_core.ipynb"}
 
 modules = ["base.py",
-           "core.py"]
+           "models.py"]
 
 doc_url = "https://puhazoli.github.io/asbe/"
 

@@ -86,7 +86,7 @@ class BaseITEEstimator(BaseEstimator):
                 ite = m1_preds - m0_preds
             except:
                 ite = self._predict_bin_or_con(self.model, X)
-        return np.array(ite)
+        return np.asarray(ite)
 
 # Cell
 class BaseActiveLearner(BaseEstimator):
@@ -139,6 +139,13 @@ class BaseActiveLearner(BaseEstimator):
                 self.dataset[f"{data}_pool"] = np.delete(self.dataset[f"{data}_pool"],
                                                              query_idx, 0)
 
+    def _select_counterfactuals(self, query_idx, treatment):
+        self.dataset["y_pool"][query_idx] = np.where(treatment == 1,
+                                                     self.dataset["y1_pool"][query_idx],
+                                                     self.dataset["y0_pool"][query_idx])
+
+        self.dataset["t_pool"][query_idx] = treatment
+
     def fit(self) -> None:
         self.estimator.fit(self.dataset["X_training"],
                            self.dataset["t_training"],
@@ -146,22 +153,23 @@ class BaseActiveLearner(BaseEstimator):
         return None
 
     def predict(self, X):
-        self.estimator.predict(X)
+        return self.estimator.predict(X)
 
     def query(self, no_query = None, acquisition_function = None):
-        """Main function to get labels of datapoints"""
+        """Main function to select datapoints"""
         if len(self.acquisition_function_list) == 0:
             if acquisition_function is None:
                 acquisition_function = self.acquisition_function
         else:
             if acquisition_function is None:
                 acquisition_function = self.acquisition_function
-        query_idx = acquisition_function.select_data(self.estimator,
+        X_new, query_idx = acquisition_function.select_data(self.estimator,
                                                           self.dataset,
                                                           no_query)
-        return query_idx
+        return X_new, query_idx
 
     def teach(self, query_idx, assignment_function = None, **kwargs):
+        """Function to assign the selected labels """
         if len(self.assignment_function_list) == 0:
             if assignment_function is None:
                 assignment_function = self.assignment_function
@@ -173,6 +181,9 @@ class BaseActiveLearner(BaseEstimator):
         treatment = assignment_function.select_treatment(self.estimator,
                                                               self.dataset,
                                                               query_idx)
+        if "y0_pool" in self.dataset:
+            self._select_counterfactuals(query_idx, treatment)
+
         matching = treatment == self.dataset["t_pool"][query_idx]
 
         if matching.all():
@@ -215,7 +226,11 @@ class BaseActiveLearner(BaseEstimator):
                 preds = self.predict(self.dataset["X_test"])
                 res[af.name][i] = self.score()
                 self.current_step += 1
+        self.simulation_results = res
         return res
+
+    def plot(self):
+        pd.DataFrame(self.simulation_results).plot()
 
 # Cell
 class BaseAcquisitionFunction():
@@ -237,15 +252,15 @@ class BaseAcquisitionFunction():
             no_query = self.no_query
         metrics = self.calculate_metrics(model, dataset)
         if self.method == "top":
-            query_idx = np.argsort(metrics)[-no_query:][::-1]
+            query_idx = np.argsort(np.asarray(metrics))[-no_query:][::-1]
             X_new = dataset["X_pool"][query_idx,:]
         return X_new, query_idx
 
 # Cell
 class BaseAssignmentFunction():
     """Base class for assignment functions"""
-    def __init__(self):
-        pass
+    def __init__(self, base_selection = 0):
+        self.base_selection = base_selection
 
     def select_treatment(self, model, dataset, query_idx):
         return dataset["t_pool"][query_idx]
