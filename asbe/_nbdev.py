@@ -2,27 +2,25 @@
 
 __all__ = ["index", "modules", "custom_doc_links", "git_url"]
 
-index = {"BaseITEEstimator": "00_base.ipynb",
+index = {"FitTask": "00_base.ipynb",
+         "BaseITEEstimator": "00_base.ipynb",
          "BaseActiveLearner": "00_base.ipynb",
          "BaseAcquisitionFunction": "00_base.ipynb",
          "BaseAssignmentFunction": "00_base.ipynb",
+         "BaseStoppingRule": "00_base.ipynb",
          "RandomAcquisitionFunction": "01_core.ipynb",
          "UncertaintyAcquisitionFunction": "01_core.ipynb",
          "TypeSAcquistionFunction": "01_core.ipynb",
          "EMCMAcquisitionFunction": "01_core.ipynb",
          "RandomAssignmentFunction": "01_core.ipynb",
          "MajorityAssignmentFunction": "01_core.ipynb",
-         "random_batch_sampling": "01_core.ipynb",
-         "uncertainty_batch_sampling": "01_core.ipynb",
-         "type_s_batch_sampling": "01_core.ipynb",
-         "expected_model_change_maximization": "01_core.ipynb",
-         "ASLearner": "01_core.ipynb",
-         "estimator_type": "01_core.ipynb",
-         "ITEEstimator": "01_core.ipynb",
-         "variance_based_assf": "01_core.ipynb"}
+         "CausalForestEstimator": "estimators.ipynb",
+         "OPENBTITEEstimator": "estimators.ipynb",
+         "CEVAEEstimator": "estimators.ipynb"}
 
 modules = ["base.py",
-           "models.py"]
+           "models.py",
+           "estimators.py"]
 
 doc_url = "https://puhazoli.github.io/asbe/"
 
