@@ -207,7 +207,7 @@ class BaseActiveLearner(BaseEstimator):
         return None
 
     def predict(self, X):
-        return self.estimator.predict(X)
+        return self.estimator.predict(X=X)
 
     def query(self, no_query = None, acquisition_function = None):
         """Main function to select datapoints"""
@@ -259,7 +259,10 @@ class BaseActiveLearner(BaseEstimator):
         if metric not in ["Qini", "PEHE", "Cgains"]:
             raise ValueError(f"Please use a valid error (PEHE, Qini, Cgains), {metric} is not valid")
         if metric == "PEHE":
-            preds = self.estimator.predict(self.dataset["X_test"])
+            try:
+                preds = self.estimator.predict(X=self.dataset["X_test"], return_mean=True)
+            except:
+                preds = self.estimator.predict(X=self.dataset["X_test"])
             try:
                 sc = np.sqrt(np.mean(np.square(preds - self.dataset["ite_test"])))
             except KeyError:

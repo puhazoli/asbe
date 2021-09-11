@@ -24,7 +24,7 @@ class RandomAcquisitionFunction(BaseAcquisitionFunction):
 
 class UncertaintyAcquisitionFunction(BaseAcquisitionFunction):
     def calculate_metrics(self, model, dataset):
-        preds = model.predict(dataset["X_pool"])
+        preds = model.predict(X = dataset["X_pool"])
         if type(preds) is tuple:
             p, pred_var = preds[0], preds[1]
         try:
@@ -37,22 +37,85 @@ class UncertaintyAcquisitionFunction(BaseAcquisitionFunction):
 
 class TypeSAcquistionFunction(BaseAcquisitionFunction):
     def calculate_metrics(self, model, dataset):
-        preds = model.predict(dataset["X_pool"])
-        if preds.shape[0] <= 1 or len(y1_preds.shape) <= 1:
+        preds = model.predict(X=dataset["X_pool"])
+        if preds.shape[0] <= 1:
             raise Exception("Type S error needs multiple values per prediction")
         prob_s = np.sum(preds > 0, axis=1)/preds.shape[1]
         prob_s_sel = np.where(prob_s > 0.5, 1-prob_s, prob_s) + .0001
+        return prob_s_sel
 
 class EMCMAcquisitionFunction(BaseAcquisitionFunction):
     def __init__(self, no_query = 1,
                  method = "top",
                  name = "emcm",
-                 approx_model = SGDRegressor()):
+                 approx_model = SGDRegressor(),
+                 B = 100,
+                 K = 5,
+                 threshold = 0):
         super().__init__(no_query, method, name)
         self.approx_model = approx_model
+        self.B = B
+        self.K = K
+        self.threshold = threshold
+        self.model_change = []
 
-    def calculate_metrics(self, model, dataset):
-        pass
+    def calculate_metrics(self, model, dataset, **kwargs):
+        ite_train_preds = model.predict(X = dataset["X_training"])
+        ite_pool_preds = model.predict(X = dataset["X_pool"])
+        if ite_train_preds.shape[1] < 1:
+            raise ValueError("The treatment effect does not have uncertainty around it - \
+                         consider using a different estimator")
+        sc = StandardScaler()
+        X_scaled = sc.fit_transform(dataset["X_training"])
+        # Fit approx model
+        # calc type-s error
+        train_type_s_prob_1 = np.sum(ite_train_preds > 0, axis=1)/ite_train_preds.shape[1]
+        train_type_s = np.where(train_type_s_prob_1 > 0.5, 1-train_type_s_prob_1, train_type_s_prob_1) + .0001
+        pool_type_s_prob_1 = np.sum(ite_pool_preds > 0, axis=1)/ite_pool_preds.shape[1]
+        pool_type_s = np.where(pool_type_s_prob_1 > 0.5, 1-pool_type_s_prob_1, pool_type_s_prob_1) + .0001
+        self.approx_model.fit(
+            X = X_scaled,
+            y = np.mean(ite_train_preds, axis=1),
+            sample_weight = 5*train_type_s)
+        # Using list as it is faster than appending to np array
+        query_idx = []
+        # Using a loop for the combinatorial opt. part
+        for ix in range(self.no_query):
+            if self.no_query > (dataset["X_pool"].shape[0]):
+                raise IndexError("Too many samples are queried from the pool ($n_2 > ||X_pool||$)")
+            # Select randomly from X_pool
+            prob_sampling = np.ones((dataset["X_pool"].shape[0]))/(
+                dataset["X_pool"].shape[0]-len(query_idx))
+            # Set the probability of already selected samples to 0
+            if ix > 0:
+                prob_sampling[query_idx] = 0
+            # B = 100 by default, can be modified by kwargs
+            considered_ixes = np.random.choice(dataset["X_pool"].shape[0],
+                                             size = self.B,
+                                             replace=False,
+                                             p=prob_sampling)
+            # Calculate the grads for all
+            grads = np.array([])
+            for considered_ix in considered_ixes:
+                new_X = sc.transform(dataset["X_pool"][considered_ix].reshape(1, -1))
+                app_predicted_ite = self.approx_model.predict(new_X)
+                # bootstrapping accroding to eq. 11 of Cai and Zhang
+                true_ite = np.random.choice(ite_pool_preds[considered_ix],
+                                            size=self.K)
+                grad = np.sum(np.abs(np.kron((true_ite - app_predicted_ite),new_X)))
+                grads = np.append(grads, grad)
+            if np.max(grads) < self.threshold:
+                break
+            self.model_change = np.append(self.model_change,np.max(grads))
+            query_idx.append(int(considered_ixes[np.argmax(grads)]))
+            self.approx_model.partial_fit(
+                sc.transform(dataset["X_pool"][int(query_idx[ix])].reshape(1, -1)),
+                np.random.choice(ite_pool_preds[int(query_idx[ix])], size=1),
+                sample_weight = np.array(pool_type_s[int(query_idx[ix])]).ravel())
+        out = np.zeros(dataset["X_pool"].shape[0])
+        out[query_idx] = 1
+        return out
+
 
 # Cell
 class RandomAssignmentFunction(BaseAssignmentFunction):
