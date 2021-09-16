@@ -17,11 +17,13 @@ index = {"FitTask": "00_base.ipynb",
          "CausalForestEstimator": "02_estimators.ipynb",
          "OPENBTITEEstimator": "02_estimators.ipynb",
          "CEVAEEstimator": "02_estimators.ipynb",
-         "GPEstimator": "02_estimators.ipynb"}
+         "GPEstimator": "02_estimators.ipynb",
+         "get_ihdp_dict": "99_misc.ipynb"}
 
 modules = ["base.py",
            "models.py",
-           "estimators.py"]
+           "estimators.py",
+           "helper.py"]
 
 doc_url = "https://puhazoli.github.io/asbe/"
 
