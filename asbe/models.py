@@ -13,7 +13,6 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.pipeline import make_pipeline
 from typing import Union, Optional, Callable
 from copy import deepcopy
-from pylift.eval import UpliftEval
 
 # Cell
 class RandomAcquisitionFunction(BaseAcquisitionFunction):

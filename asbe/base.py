@@ -186,7 +186,7 @@ class BaseActiveLearner(BaseEstimator):
         try:
             self.dataset["y0_pool"] = np.delete(self.dataset["y0_pool"],
                                                              query_idx, 0)
-            self.dataset["y1_pool"] = np.delete(self.dataset["y0_pool"],
+            self.dataset["y1_pool"] = np.delete(self.dataset["y1_pool"],
                                                              query_idx, 0)
         except:
             pass
@@ -256,20 +256,24 @@ class BaseActiveLearner(BaseEstimator):
         return None
 
     def score(self, metric="PEHE"):
-        if metric not in ["Qini", "PEHE", "Cgains"]:
-            raise ValueError(f"Please use a valid error (PEHE, Qini, Cgains), {metric} is not valid")
+        metrics = ["Qini", "PEHE", "Cgains", "decision"]
+        if metric not in metrics:
+            raise ValueError(f"Please use a valid error ({metrics}), {metric} is not valid")
+        try:
+            preds = self.estimator.predict(X=self.dataset["X_test"], return_mean=True)
+        except:
+            preds = self.estimator.predict(X=self.dataset["X_test"])
         if metric == "PEHE":
-            try:
-                preds = self.estimator.predict(X=self.dataset["X_test"], return_mean=True)
-            except:
-                preds = self.estimator.predict(X=self.dataset["X_test"])
             try:
                 sc = np.sqrt(np.mean(np.square(preds - self.dataset["ite_test"])))
             except KeyError:
                 raise Error("Check if dataset contains true ITE values")
+        elif metric == "decision":
+            dec = np.where((preds >= 0) &( self.dataset["ite_test"] >= 0), 1, 0)
+            sc = np.sum(dec)/self.dataset["ite_test"].shape[0]
         return sc
 
-    def simulate(self, no_query: int = None) -> dict:
+    def simulate(self, no_query: int = None, metric: str = "Qini") -> dict:
         ds = deepcopy(self.dataset)
         est = deepcopy(self.estimator)
         res = {}
@@ -289,8 +293,8 @@ class BaseActiveLearner(BaseEstimator):
                 X_new, query_idx = self.query(no_query=no_query, acquisition_function = af)
                 if self.next_query:
                     self.teach(query_idx)
-                    preds = self.predict(self.dataset["X_test"])
-                    res[af.name][i] = self.score()
+                    #preds = self.predict(self.dataset["X_test"])
+                    res[af.name][i] = self.score(metric=metric)
                     self.current_step += 1
         self.simulation_results = res
         return res

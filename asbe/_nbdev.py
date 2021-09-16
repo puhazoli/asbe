@@ -16,7 +16,8 @@ index = {"FitTask": "00_base.ipynb",
          "MajorityAssignmentFunction": "01_core.ipynb",
          "CausalForestEstimator": "estimators.ipynb",
          "OPENBTITEEstimator": "estimators.ipynb",
-         "CEVAEEstimator": "estimators.ipynb"}
+         "CEVAEEstimator": "estimators.ipynb",
+         "GPEstimator": "estimators.ipynb"}
 
 modules = ["base.py",
            "models.py",
