@@ -4,8 +4,6 @@ __all__ = ['CausalForestEstimator', 'OPENBTITEEstimator', 'CEVAEEstimator', 'GPE
 
 # Cell
 from .base import *
-# import pymc3 as pm
-# from pymc3 import glm, sample
 from econml.orf import DMLOrthoForest
 from econml.dml import CausalForestDML
 from causalml.inference.nn import CEVAE
