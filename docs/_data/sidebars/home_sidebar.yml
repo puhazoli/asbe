@@ -10,8 +10,11 @@ entries:
       title: Overview
       url: /
     - output: web,pdf
+      title: Title
+      url: ihdp.html
+    - output: web,pdf
       title: ASBE - Automatic Stopping for Batch Experiments
-      url: core.html
+      url: models.html
     output: web
     title: asbe
   output: web

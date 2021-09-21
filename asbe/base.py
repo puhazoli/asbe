@@ -13,6 +13,12 @@ from pylift.eval import UpliftEval
 
 # Cell
 class FitTask(type):
+    """Meta class to make preprocessing of data before fitting different models
+
+    This meta class is needed so new models can be incorporated easily
+    by only having a .fit() method. It will call a prepare_data function, which
+    can also be modified .
+    """
     # https://stackoverflow.com/a/18859019
     def __init__(cls, name, bases, clsdict):
         if 'fit' in clsdict:
@@ -45,7 +51,30 @@ class BaseITEEstimator(BaseEstimator, metaclass=FitTask):
 
     This is a base class, that is also usable on its own to estimate treatment effects.
     It works with most models that have a .fit() method, but subclassing is also made
-    straightforward throught a metaclass. """
+    straightforward throught a metaclass.
+
+    Attributes
+    ----------
+    model : str, Callable
+        treatment effect estimator to be used
+    dataset: dict, BaseDataGenerator
+        dataset to be used by the model, either offline or online
+    two_model: bool
+        Switches between S or T learner approach, when appropriate
+    ps_model: Callable, None
+        Propensity score model, if used, must be classifier
+
+    Methods
+    -------
+    prepare_data(X_training, t_training, y_training, ps_scores):
+        Puts together data for training before .fit() is called
+
+    fit(X_training, t_training, y_training, ps_scores):
+        Fits the treatment effect estimator to the training data
+
+    predict(X, ps_scores):
+        Predicts the treatment effects based on the supplied X
+    """
 
     def __init__(self,
                 model: Union[str, Callable] = None,
@@ -58,11 +87,48 @@ class BaseITEEstimator(BaseEstimator, metaclass=FitTask):
         self.two_model = two_model
         self.ps_model = ps_model
         self.proba = False
+        """
+        Makes the estimator ready for its task
+
+        Parameters
+        ----------
+        model : str, Callable
+            treatment effect estimator to be used
+        dataset: dict, BaseDataGenerator
+            dataset to be used by the model, either offline or online
+        two_model: bool
+            Switches between S or T learner approach, when appropriate
+        ps_model: Callable, None
+            Propensity score model, if used, must be classifier
+
+        Returns
+        -------
+        None
+        """
 
     def _fit_ps_model(self, X_training, t_training):
         self.ps_model.fit(X_training, t_training)
 
     def prepare_data(self, X_training=None, t_training=None, y_training=None, ps_scores=None):
+        """
+        Prepares data before fitting the model
+
+        Parameters
+        ----------
+        X_training : np.ndarray
+            Training features (size n x d)
+        t_training : np.ndarray
+            Training treatments (size n x 1)
+        y_training : np.ndarray
+            Training labels (size n x 1)
+        ps_scores : np.ndarray, None
+            Optinal propensity scores if they are coming from outside model
+
+        Returns
+        -------
+        X_training, t_training, y_training, ps_scores
+            Updated training data
+        """
         if X_training is None:
             try:
                 X_training = deepcopy(self.dataset["X_training"])
@@ -92,7 +158,24 @@ class BaseITEEstimator(BaseEstimator, metaclass=FitTask):
             y_training,
             ps_scores,
             **kwargs):
-        "Fit function, using .fit() from other models"
+        """
+        Fits the model using .fit() function of other the given ITE estimators
+
+        Parameters
+        ----------
+        X_training : np.ndarray
+            Training features (size n x d)
+        t_training : np.ndarray
+            Training treatments (size n x 1)
+        y_training : np.ndarray
+            Training labels (size n x 1)
+        ps_scores : np.ndarray, None
+            Optinal propensity scores if they are coming from outside model
+
+        Returns
+        -------
+        None
+        """
         if self.two_model is False or self.two_model is None:
             self.model.fit(X_training, y_training)
         else:
@@ -115,6 +198,20 @@ class BaseITEEstimator(BaseEstimator, metaclass=FitTask):
                     X: np.ndarray,
                     ps_scores = None,
                     **kwargs):
+        """
+        Predicts the treatment effect using the fitted model on the given features
+
+        Parameters
+        ----------
+        X : np.ndarray
+            Features (size n x d)
+        ps_scores : np.ndarray, None
+            Optinal propensity scores if they are coming from outside model
+
+        Returns
+        -------
+        Predicted treatment effect scores (size n x 1 / n x B)
+        """
         if self.ps_model is not None or ps_scores is not None:
             if self.ps_model is not None:
                 ps_scores = self.ps_model.predict_proba(X)
@@ -139,7 +236,47 @@ class BaseActiveLearner(BaseEstimator):
     """Basic of Active Learners later used, with the capability for treatment effects
 
     Inspired by modAL's BaseLearner, however modified for ITE estimation. Dataset is provided by
-    a dictionary for easier usage and less clutter.
+    a dictionary for easier usage and less clutter, but alternatively a BaseDataGenerator can
+    also be supplied.
+
+    Attributes
+    ----------
+    estimator: BaseEstimator
+        Estimator for treatment effects, which expects a BaseEstimator or a subclass of it
+    acquisition_function:
+        Method that selects units to label
+    assignment_function:
+        Method that selects control or treatment for selected units
+    stopping_function:
+        Method that determines if the active learning process should stop after the current step
+    dataset : dict, BaseDataGenerator
+        Dataset that is used for the active learning process
+    al_steps : int = 1
+        number of active learnign steps to take. Can be controlled from the outside by self.current_step
+    offline : bool
+        Determines whether data is supplied beforehand or created on the fly
+
+    Methods
+    -------
+    fit():
+        Fits the supplied estimator with data from dataset
+    predict(X):
+        Predicts X with the estimator
+    query(no_query = None, acquisition_function = None):
+        Calls the acquisition function to query datapoints to label.
+        Number of queries and AF can be supplied, which overwrited the active learner's
+        at the current step
+    teach(query_idx=None, assignment_function = None, **kwargs):
+        Teaches the supplied indices, by moving them to the training set and
+        selects the counterfactuals used
+    score(metric="PEHE"):
+        Uses a test set to calculate a metric from the estimator
+    simulate(no_query: int = None, metric: str = "Qini")
+        Simulates the active learning process by going through al_steps.
+        The metric for the simulation to be saved can be set
+    plot():
+        Plots the typical active learning style line plot, after simulation
+        has finished.
     """
     def __init__(self,
                  estimator: BaseEstimator,
@@ -151,6 +288,31 @@ class BaseActiveLearner(BaseEstimator):
                  offline = True,
                  **kwargs
                 ) -> None:
+        """Initiates the active learning sequence
+
+        If the learning happens offline, sets up calls to the data generating processes
+
+        Parameters
+        ----------
+        estimator: BaseEstimator
+            Estimator for treatment effects, which expects a BaseEstimator or a subclass of it
+        acquisition_function:
+            Method that selects units to label
+        assignment_function:
+            Method that selects control or treatment for selected units
+        stopping_function:
+            Method that determines if the active learning process should stop after the current step
+        dataset : dict, BaseDataGenerator
+            Dataset that is used for the active learning process
+        al_steps : int = 1
+            number of active learnign steps to take. Can be controlled from the outside by self.current_step
+        offline : bool
+            Determines whether data is supplied beforehand or created on the fly
+
+        Returns
+        -------
+        None
+        """
         self.estimator = estimator
         if type(acquisition_function) is list:
             self.acquisition_function_list = acquisition_function
@@ -207,7 +369,7 @@ class BaseActiveLearner(BaseEstimator):
 
 
     def _select_counterfactuals(self, query_idx, treatment):
-        "Rewrited observed outcome in pool for counterfactuals"
+        "Rewrites observed outcomes in pool for counterfactuals"
         self.dataset["y_pool"][query_idx] = np.where(treatment == 1,
                                                      self.dataset["y1_pool"][query_idx],
                                                      self.dataset["y0_pool"][query_idx])
@@ -215,16 +377,49 @@ class BaseActiveLearner(BaseEstimator):
         self.dataset["t_pool"][query_idx] = treatment
 
     def fit(self) -> None:
+        """
+        Fits the model using the given estimator
+        """
         self.estimator.fit(X_training = self.dataset["X_training"],
                            t_training = self.dataset["t_training"],
                            y_training = self.dataset["y_training"])
         return None
 
     def predict(self, X):
+        """
+        Predicts using the the given estimator
+
+        Attributes
+        ----------
+        X : np.ndarray
+            The features to predict on
+
+        Returns
+        -------
+        Predicted treatment effects
+        """
         return self.estimator.predict(X=X)
 
     def query(self, no_query = None, acquisition_function = None):
-        """Main function to select datapoints"""
+        """Main function to select datapoints for labeling
+
+        Calls the acquisition function to determine which units to label.
+        The acquisition function can be overwritten for a given query and the number
+        of queries as well. Queries happen until the budget is exhauested, which is
+        controlled by the stopping function.
+
+        Parameters
+        ----------
+        no_query : int = None
+            Number of queries
+        acquisition_function
+            Optional acquisition function
+
+        Returns
+        -------
+        X_new, query_idx :
+            Selected features, selected indices
+        """
         if self.stopping_function is not None:
             self.next_query = self.stopping_function.check_rule(
                 self.estimator, self.dataset, self.step)
@@ -261,7 +456,22 @@ class BaseActiveLearner(BaseEstimator):
         return X_new, query_idx
 
     def teach(self, query_idx=None, assignment_function = None, **kwargs):
-        """Function to assign the selected labels """
+        """Function to assign the selected labels to the training set
+
+        Selects counterfactuals (if possible), through the assignmnet function
+        and moves data from the pool to the training set.
+
+        Parameters
+        ----------
+        query_idx : np.array = None
+            the indices of queryed samples
+        assignment_function : None
+            Optional assignment function to be used tp select counterfactuals
+
+        Returns
+        -------
+        None
+        """
 
         if len(self.assignment_function_list) == 0:
             if assignment_function is None:
@@ -295,6 +505,18 @@ class BaseActiveLearner(BaseEstimator):
         return None
 
     def score(self, metric="PEHE"):
+        """
+        Calculates the metric given on the test set.
+
+        Parameters
+        ----------
+        metric : str = "PEHE"
+            Metric to be used when calculating the performance
+
+        Returns
+        -------
+        The score of the model
+        """
         metrics = ["Qini", "PEHE", "Cgains", "decision"]
         if metric not in metrics:
             raise ValueError(f"Please use a valid error ({metrics}), {metric} is not valid")
@@ -316,6 +538,21 @@ class BaseActiveLearner(BaseEstimator):
         return sc
 
     def simulate(self, no_query: int = None, metric: str = "Qini") -> dict:
+        """
+        Simulates the active learning process based on the attributes to the class
+
+        Parameters
+        ----------
+        no_query:
+            Number of units to be queried
+        Metric:
+            Metric to be claculated at the end of each active learning step
+
+        Returns
+        -------
+        dict
+            Dictionary with keys of assignment functions and values of steps and scores
+        """
         ds = deepcopy(self.dataset)
         est = deepcopy(self.estimator)
         res = {}
@@ -344,11 +581,30 @@ class BaseActiveLearner(BaseEstimator):
         return res
 
     def plot(self):
+        """Plots the results of the AL simulation"""
         pd.DataFrame(self.simulation_results).plot()
 
 # Cell
 class BaseAcquisitionFunction():
-    """Base class for acquisition functions"""
+    """Base class for acquisition functions
+
+    Attributes
+    ----------
+    no_query : int = 1
+        Number of queries
+    method : str = "top"
+        Way to select the data after metrics are calculated
+    name : str
+        Name of the AF, used in simulations
+
+    Methods
+    -------
+    calculate_metrics(model, dataset):
+        User defined method to get different metrics about the pool set
+    select_data(model, dataset, no_query):
+        Based on the calculated metrics, selects the data to be added to the
+        training set.
+    """
     def __init__(self,
                 no_query: int = 1,
                 method: str = "top",
@@ -358,11 +614,41 @@ class BaseAcquisitionFunction():
         self.name = name + "_" + str(no_query)
 
     def calculate_metrics(self, model, dataset) -> np.array:
-        """Method to calculate base metrics for assignment function"""
+        """
+        Method to calculate base metrics for assignment function
+
+        Parameters
+        ----------
+        model:
+            The ITE estimator
+        dataset:
+            The dataset dictionary/class that holds the training/pool set.
+
+        Returns
+        -------
+        individual metrics
+        """
         return np.arange(dataset["X_pool"].shape[0]) + 1
 
     def select_data(self, model, dataset, no_query, offline=True):
-        """Based on the calculated metrics, select data and return X and indexes"""
+        """
+        Based on the calculated metrics, select data and return X and indexes
+
+        Parameters
+        ----------
+        model:
+            The ITE estimator
+        dataset:
+            The dataset dictionary/class that holds the training/pool set.
+        no_query:
+            Number of queries
+        offline : bool
+            Indicator whether the process is online/offline
+
+        Returns
+        -------
+        Tuple of new features and indices
+        """
         if no_query is None:
             no_query = self.no_query
         metrics = self.calculate_metrics(model, dataset)
