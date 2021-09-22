@@ -494,7 +494,7 @@ class BaseActiveLearner(BaseEstimator):
                 self._update_dataset(query_idx[matching], **kwargs)
             else:
                 pass
-        except (AttributeError, IndexError) as e:
+        except:
             treatment_to_add = self.dataset.get_t(X_new = self.X_to_add)
             y = self.dataset.get_y(X_new=self.X_to_add, t_new = treatment_to_add)
             self.dataset.__dict__["X_pool"] = self.X_to_add
