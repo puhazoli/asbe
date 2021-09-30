@@ -10,7 +10,7 @@ import numpy as np
 from typing import Union, Callable, Optional, Tuple, List, Iterator, Any
 from copy import deepcopy
 from dataclasses import dataclass, field
-from pylift.eval import UpliftEval
+#from pylift.eval import UpliftEval
 from fastcore.test import *
 
 # Cell
@@ -535,8 +535,9 @@ class BaseActiveLearner(BaseEstimator):
             dec = np.where((preds >= 0) &( self.dataset["ite_test"] >= 0), 1, 0)
             sc = np.sum(dec)/self.dataset["ite_test"].shape[0]
         elif metric == "Qini":
-            ue = UpliftEval(self.dataset["t_test"], self.dataset["y_test"], preds)
-            sc = ue.q1_aqini
+            raise NotImplementedError("New uplift metric needs to be implemented")
+            #ue = UpliftEval(self.dataset["t_test"], self.dataset["y_test"], preds)
+            #sc = ue.q1_aqini
         return sc
 
     def simulate(self, no_query: int = None, metric: str = "Qini") -> dict:
