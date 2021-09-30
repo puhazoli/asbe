@@ -4,6 +4,7 @@ __all__ = ['RandomAcquisitionFunction', 'UncertaintyAcquisitionFunction', 'TypeS
            'EMCMAcquisitionFunction', 'RandomAssignmentFunction', 'MajorityAssignmentFunction']
 
 # Cell
+#hide_output
 import numpy as np
 from .base import *
 from modAL.models.base import BaseLearner

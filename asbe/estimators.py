@@ -3,6 +3,7 @@
 __all__ = ['CausalForestEstimator', 'OPENBTITEEstimator', 'CEVAEEstimator', 'GPEstimator']
 
 # Cell
+#hide_output
 from .base import *
 from econml.orf import DMLOrthoForest
 from econml.dml import CausalForestDML

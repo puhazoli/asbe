@@ -4,12 +4,14 @@ __all__ = ['FitTask', 'BaseITEEstimator', 'BaseActiveLearner', 'BaseAcquisitionF
            'BaseStoppingRule', 'BaseDataGenerator']
 
 # Cell
+#hide_output
 from sklearn.base import BaseEstimator
 import numpy as np
 from typing import Union, Callable, Optional, Tuple, List, Iterator, Any
 from copy import deepcopy
 from dataclasses import dataclass, field
 from pylift.eval import UpliftEval
+from fastcore.test import *
 
 # Cell
 class FitTask(type):

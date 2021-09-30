@@ -10,11 +10,29 @@ entries:
       title: Overview
       url: /
     - output: web,pdf
-      title: Title
-      url: ihdp.html
+      title: Basic functionalities
+      url: base.html
     - output: web,pdf
-      title: ASBE - Automatic Stopping for Batch Experiments
+      title: Acquisition and assignment functions
       url: models.html
+    - output: web,pdf
+      title: Treatment effect estimators
+      url: estimators.html
+    - output: web,pdf
+      title: Misc functions
+      url: misc.html
+    - output: web,pdf
+      title: Simple usage of different acquisition functions
+      url: Acquisition functions.html
+    - output: web,pdf
+      title: How to deal with online data
+      url: Offline data.html
+    - output: web,pdf
+      title: Replication of Sundin et al, ICML 2019
+      url: Replicate Sundin et al.html
+    - output: web,pdf
+      title: Showcasing `asbe` with IHDP data
+      url: ihdp.html
     output: web
     title: asbe
   output: web
