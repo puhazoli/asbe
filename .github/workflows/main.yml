@@ -11,7 +11,7 @@ jobs:
         architecture: 'x64'
     - name: Install the library
       run: |
-        pip install nbdev jupyter numpy sklearn wheel modAL xbart pylift pandas dataclasses matplotlib tensorflow causalml econml fastcore
+        pip install nbdev jupyter numpy sklearn wheel modAL pylift pandas dataclasses matplotlib tensorflow causalml econml fastcore
         pip install -e .
     - name: Read all notebooks
       run: |
