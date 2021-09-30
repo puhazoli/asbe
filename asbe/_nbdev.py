@@ -17,7 +17,6 @@ index = {"FitTask": "00_base.ipynb",
          "MajorityAssignmentFunction": "01_models.ipynb",
          "CausalForestEstimator": "02_estimators.ipynb",
          "OPENBTITEEstimator": "02_estimators.ipynb",
-         "CEVAEEstimator": "02_estimators.ipynb",
          "GPEstimator": "02_estimators.ipynb",
          "get_ihdp_dict": "99_misc.ipynb"}
 
