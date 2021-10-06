@@ -570,6 +570,9 @@ class BaseActiveLearner(BaseEstimator):
             self.estimator = deepcopy(est)
             self.current_step = 0
             res[af.name] = {}
+            if type(metric) is list:
+                for m in metric:
+                    res[af.name][m]={}
             for i in range(1, self.al_steps+1):
                 self.fit()
                 X_new, query_idx = self.query(no_query=no_query, acquisition_function = af)
@@ -578,7 +581,11 @@ class BaseActiveLearner(BaseEstimator):
                         self.teach(query_idx)
                     else:
                         self.teach()
-                    res[af.name][i] = self.score(metric=metric)
+                    if type(metric) is list:
+                        for m in metric:
+                            res[af.name][m][i] = self.score(metric=m)
+                    else:
+                        res[af.name][i] = self.score(metric=metric)
                     self.current_step += 1
         self.simulation_results = res
         return res
