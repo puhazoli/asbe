@@ -38,16 +38,24 @@ class OPENBTITEEstimator(BaseITEEstimator):
 
     The predictions are transposed so the uncertainty sampler can calculate uncertianty easily"""
     def predict(self, **kwargs):
-        X0 = np.concatenate((kwargs["X"],
-                             np.zeros(kwargs["X"].shape[0]).reshape((-1,1))),axis=1)
-        X1 = np.concatenate((kwargs["X"],
-                             np.ones(kwargs["X"].shape[0]).reshape((-1,1))),axis=1)
+        X = kwargs["X"]
+        if self.ps_model is not None:
+            ps_scores = self.ps_model.predict_proba(X)
+            X = np.hstack((X, ps_scores[:,1].reshape((-1, 1))))
+        X0 = np.concatenate((X,
+                             np.zeros(X.shape[0]).reshape((-1,1))),axis=1)
+        X1 = np.concatenate((X,
+                             np.ones(X.shape[0]).reshape((-1,1))),axis=1)
         preds0 = self.model.predict(X0)
         preds1 = self.model.predict(X1)
         if "return_mean" in kwargs:
-            out = preds1["mmean"] - preds0["mmean"]
+            if kwargs["return_mean"]:
+                out = preds1["mmean"] - preds0["mmean"]
         else:
             out = preds1["mdraws"].T - preds0["mdraws"].T
+        if "return_per_cf" in kwargs:
+            if kwargs["return_per_cf"]:
+                return {"pred1": preds1["mdraws"].T , "pred0":preds0["mdraws"].T}
         return out
 
 # Cell

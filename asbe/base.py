@@ -12,6 +12,7 @@ from copy import deepcopy
 from dataclasses import dataclass, field
 #from pylift.eval import UpliftEval
 from fastcore.test import *
+import asbe
 
 # Cell
 class FitTask(type):
@@ -143,7 +144,7 @@ class BaseITEEstimator(BaseEstimator, metaclass=FitTask):
         if self.ps_model is not None or ps_scores is not None:
             if self.ps_model is not None:
                 self._fit_ps_model(X_training, t_training)
-                ps_scores = self.ps_model.predict(X_training)
+                ps_scores = self.ps_model.predict_proba(X_training)
             try:
                 X_training = np.hstack((X_training, ps_scores[:,1].reshape((-1, 1))))
             except:
@@ -477,6 +478,8 @@ class BaseActiveLearner(BaseEstimator):
 
         if len(self.assignment_function_list) == 0:
             if assignment_function is None:
+                if self.assignment_function is None:
+                    self.assignment_function = asbe.models.RandomAssignmentFunction()
                 assignment_function = self.assignment_function
             else:
                 raise ValueError("No assignment function provided")
@@ -520,8 +523,9 @@ class BaseActiveLearner(BaseEstimator):
         The score of the model
         """
         metrics = ["Qini", "PEHE", "Cgains", "decision"]
-        if metric not in metrics:
-            raise ValueError(f"Please use a valid error ({metrics}), {metric} is not valid")
+        if not callable(metric):
+            if metric not in metrics:
+                raise ValueError(f"Please use a valid error ({metrics}), {metric} is not valid")
         try:
             preds = self.estimator.predict(X=self.dataset["X_test"], return_mean=True)
         except:
@@ -538,6 +542,11 @@ class BaseActiveLearner(BaseEstimator):
             raise NotImplementedError("New uplift metric needs to be implemented")
             #ue = UpliftEval(self.dataset["t_test"], self.dataset["y_test"], preds)
             #sc = ue.q1_aqini
+        elif callable(metric):
+            try:
+                sc = metric(preds, self.dataset["ite_test"])
+            except:
+                raise ValueError("Metric can't be used with current data")
         return sc
 
     def simulate(self, no_query: int = None, metric: str = "Qini") -> dict:
@@ -598,6 +607,11 @@ class BaseActiveLearner(BaseEstimator):
 class BaseAcquisitionFunction():
     """Base class for acquisition functions
 
+    Based on Eq. 3 in paper:
+        - calculate_metrics is used to get infromativeness/representativeness
+        - calculate_metrics returns a weighted average between the two
+        - select_data does the normalization and selecting top m/Bernoulli draws
+
     Attributes
     ----------
     no_query : int = 1
@@ -636,7 +650,7 @@ class BaseAcquisitionFunction():
 
         Returns
         -------
-        individual metrics
+        weighted average of individual metrics
         """
         return np.arange(dataset["X_pool"].shape[0]) + 1
 
@@ -662,12 +676,22 @@ class BaseAcquisitionFunction():
         if no_query is None:
             no_query = self.no_query
         metrics = self.calculate_metrics(model, dataset)
+
         if offline:
             if self.method == "top":
                 query_idx = np.argsort(np.asarray(metrics))[-no_query:][::-1]
-                X_new = dataset["X_pool"][query_idx,:]
+            elif self.method == "normalized":
+                p_j = (metrics - np.min(metrics))/(np.max(metrics) - np.min(metrics))
+                query_idx = []
+                for pix in p_j.argsort()[::-1]:
+                    if np.random.binomial(1, p = p_j[pix]) == 1:
+                        query_idx.append(pix)
+                    if len(query_idx) == no_query:
+                        break
+                query_idx = np.asarray(query_idx)
             else:
                 raise NotImplementedError("Please use a method that is implemented")
+            X_new = dataset["X_pool"][query_idx,:]
             out = (X_new, query_idx)
         else:
             out = metrics.sum() >= metrics.shape[0]/2
