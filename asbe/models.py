@@ -133,7 +133,8 @@ class UncertaintyAssignmentFunction(BaseAssignmentFunction):
         try:
             var1 = np.var(preds["pred1"], axis=1)
             var0 = np.var(preds["pred0"], axis=1)
-            out = np.where(var1 > var0, 1, 0)
+            ex = var1 / (var1 + var0)
+            out = np.random.binomial(1,ex)
         except:
             raise ValueError("Can't access uncertainty per counterfactual")
         return out
