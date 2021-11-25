@@ -8,7 +8,6 @@ __all__ = ['RandomAcquisitionFunction', 'UncertaintyAcquisitionFunction', 'TypeS
 #hide_output
 import numpy as np
 from .base import *
-from modAL.models.base import BaseLearner
 from sklearn.base import BaseEstimator, ClassifierMixin, RegressorMixin
 from sklearn.linear_model import SGDRegressor
 from sklearn.preprocessing import StandardScaler
