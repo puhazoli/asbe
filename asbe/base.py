@@ -10,6 +10,7 @@ import numpy as np
 from typing import Union, Callable, Optional, Tuple, List, Iterator, Any
 from copy import deepcopy
 from dataclasses import dataclass, field
+from sklift.metrics import qini_auc_score
 #from pylift.eval import UpliftEval
 from fastcore.test import *
 import asbe
@@ -539,9 +540,9 @@ class BaseActiveLearner(BaseEstimator):
             dec = np.where((preds >= 0) &( self.dataset["ite_test"] >= 0), 1, 0)
             sc = np.sum(dec)/self.dataset["ite_test"].shape[0]
         elif metric == "Qini":
-            raise NotImplementedError("New uplift metric needs to be implemented")
-            #ue = UpliftEval(self.dataset["t_test"], self.dataset["y_test"], preds)
-            #sc = ue.q1_aqini
+            sc = qini_auc_score(y_true=self.dataset["y_test"],
+                                uplift=preds,
+                                treatment=self.dataset["t_test"])
         elif callable(metric):
             try:
                 sc = metric(preds, self.dataset["ite_test"])
