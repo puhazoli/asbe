@@ -523,7 +523,7 @@ class BaseActiveLearner(BaseEstimator):
         -------
         The score of the model
         """
-        metrics = ["Qini", "PEHE", "Cgains", "decision"]
+        metrics = ["Qini", "PEHE", "Cgains", "decision", "Qini_curve"]
         if not callable(metric):
             if metric not in metrics:
                 raise ValueError(f"Please use a valid error ({metrics}), {metric} is not valid")
