@@ -459,7 +459,8 @@ class BaseActiveLearner(BaseEstimator):
             X_new, query_idx = None, None
         return X_new, query_idx
 
-    def teach(self, query_idx=None, assignment_function = None, **kwargs):
+    def teach(self, query_idx=None, assignment_function = None, select_again = False,
+              **kwargs):
         """Function to assign the selected labels to the training set
 
         Selects counterfactuals (if possible), through the assignmnet function
@@ -471,6 +472,8 @@ class BaseActiveLearner(BaseEstimator):
             the indices of queryed samples
         assignment_function : None
             Optional assignment function to be used tp select counterfactuals
+        select_again = False
+            If there are no matching, select units until all are matching
 
         Returns
         -------
@@ -496,10 +499,17 @@ class BaseActiveLearner(BaseEstimator):
             matching = treatment == self.dataset["t_pool"][query_idx]
             if matching.all():
                 self._update_dataset(query_idx, **kwargs)
-            elif matching.sum() > 0:
-                self._update_dataset(query_idx[matching], **kwargs)
             else:
-                pass
+                self._update_dataset(query_idx[matching], **kwargs)
+                if select_again:
+                    while matching.sum() < treatment.shape[0]:
+                        X_reselected, ix_reselected = self.query(
+                            treatment.shape[0] - matching.sum())
+                        treatment = assignment_function.select_treatment(self.estimator,
+                                                              self.dataset,
+                                                              ix_reselected)
+                        matching = treatment == self.dataset["t_pool"][ix_reselected]
+                        self._update_dataset(ix_reselected[matching], **kwargs)
         except:
             treatment_to_add = self.dataset.get_t(X_new = self.X_to_add)
             y = self.dataset.get_y(X_new=self.X_to_add, t_new = treatment_to_add)
