@@ -10,7 +10,7 @@ import numpy as np
 from typing import Union, Callable, Optional, Tuple, List, Iterator, Any
 from copy import deepcopy
 from dataclasses import dataclass, field
-from sklift.metrics import qini_auc_score
+from sklift.metrics import qini_auc_score, qini_curve
 #from pylift.eval import UpliftEval
 from fastcore.test import *
 import asbe
@@ -543,6 +543,10 @@ class BaseActiveLearner(BaseEstimator):
             sc = qini_auc_score(y_true=self.dataset["y_test"],
                                 uplift=preds,
                                 treatment=self.dataset["t_test"])
+        elif metric == "Qini_curve":
+            sc = qini_curve(y_true=self.dataset["y_test"],
+                                uplift=preds,
+                                treatment=self.dataset["t_test"])
         elif callable(metric):
             try:
                 sc = metric(preds, self.dataset["ite_test"])
@@ -676,7 +680,13 @@ class BaseAcquisitionFunction():
         """
         if no_query is None:
             no_query = self.no_query
-        metrics = self.calculate_metrics(model, dataset)
+        if dataset["X_training"].shape[0] = 0:
+            try:
+                metrics = self.calculate_metrics(model, dataset)
+            else:
+                metrics = np.random.shuffle(np.arange(dataset["X_pool"].shape[0]))
+        else:
+            metrics = self.calculate_metrics(model, dataset)
 
         if offline:
             if self.method == "top":
