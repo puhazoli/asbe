@@ -690,10 +690,10 @@ class BaseAcquisitionFunction():
         """
         if no_query is None:
             no_query = self.no_query
-        if dataset["X_training"].shape[0] = 0:
+        if dataset["X_training"].shape[0] == 0:
             try:
                 metrics = self.calculate_metrics(model, dataset)
-            else:
+            except:
                 metrics = np.random.shuffle(np.arange(dataset["X_pool"].shape[0]))
         else:
             metrics = self.calculate_metrics(model, dataset)
