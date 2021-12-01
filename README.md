@@ -10,11 +10,11 @@ Created with nbdev by Zoltan Puha
 
 ## How to use
 ASBE builds on the functional views of modAL, where an AL algorithm can be run by putting together pieces. You need the following ingredients:
-- an ITE estimator (`ITEEstimator()`),
+- an ITE estimator (`BaseITEEstimator()`),
 - an acquisition function,
 - and an assignment function.
 - Additionaly, you can add a stopping criteria to your model. 
-If all the above are defined, you can construct an `ASLearner`, which will help you in the active learning process.
+If all the above are defined, you can construct an `BaseActiveLearner`, which will help you in the active learning process.
 
 ```
 from asbe.base import *

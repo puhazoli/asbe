@@ -14,7 +14,7 @@ from copy import deepcopy
 # Cell
 def get_ihdp_dict(i:int = 1):
     df = pd.read_csv(
-    "https://raw.githubusercontent.com/AMLab-Amsterdam/CEVAE/master/datasets/IHDP/csv/ihdp_npci_1.csv",
+    f"https://raw.githubusercontent.com/AMLab-Amsterdam/CEVAE/master/datasets/IHDP/csv/ihdp_npci_{i}.csv",
     names = ["treatment", "y_factual", "y_cfactual", "mu0", "mu1"] + [f'x{x}' for x in range(25)])
 
     X = df.loc[:,"x0":].to_numpy()
