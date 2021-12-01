@@ -165,8 +165,7 @@ Then, we can teach the newly acquired units to the learner, by calling the <code
 
 <div class="inner_cell">
     <div class="input_area">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">from</span> <span class="nn">xbart</span> <span class="k">import</span> <span class="n">XBART</span>
-<span class="kn">from</span> <span class="nn">sklearn.model_selection</span> <span class="k">import</span> <span class="n">train_test_split</span>
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">from</span> <span class="nn">sklearn.model_selection</span> <span class="k">import</span> <span class="n">train_test_split</span>
 <span class="kn">from</span> <span class="nn">sklearn.linear_model</span> <span class="k">import</span> <span class="n">SGDRegressor</span>
 <span class="kn">from</span> <span class="nn">copy</span> <span class="k">import</span> <span class="n">deepcopy</span>
 <span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
@@ -199,7 +198,7 @@ Then, we can teach the newly acquired units to the learner, by calling the <code
       <span class="s2">&quot;t_test&quot;</span><span class="p">:</span> <span class="n">t_test</span><span class="p">,</span>
       <span class="s2">&quot;ite_test&quot;</span><span class="p">:</span> <span class="n">ite_test</span>
      <span class="p">}</span>
-<span class="n">asl</span> <span class="o">=</span> <span class="n">BaseActiveLearner</span><span class="p">(</span><span class="n">estimator</span> <span class="o">=</span> <span class="n">BaseITEEstimator</span><span class="p">(</span><span class="n">model</span> <span class="o">=</span> <span class="n">XBART</span><span class="p">(),</span>
+<span class="n">asl</span> <span class="o">=</span> <span class="n">BaseActiveLearner</span><span class="p">(</span><span class="n">estimator</span> <span class="o">=</span> <span class="n">BaseITEEstimator</span><span class="p">(</span><span class="n">model</span> <span class="o">=</span> <span class="n">RandomForestClassifier</span><span class="p">(),</span>
                                          <span class="n">two_model</span><span class="o">=</span><span class="kc">False</span><span class="p">),</span>
                         <span class="n">acquisition_function</span><span class="o">=</span><span class="n">BaseAcquisitionFunction</span><span class="p">(),</span>
                         <span class="n">assignment_function</span><span class="o">=</span><span class="n">BaseAssignmentFunction</span><span class="p">(),</span>

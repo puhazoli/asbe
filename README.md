@@ -10,13 +10,13 @@ Created with nbdev by Zoltan Puha
 
 ## How to use
 ASBE builds on the functional views of modAL, where an AL algorithm can be run by putting together pieces. You need the following ingredients:
-- an ITE estimator (`BaseITEEstimator()`),
+- an ITE estimator (`ITEEstimator()`),
 - an acquisition function,
 - and an assignment function.
 - Additionaly, you can add a stopping criteria to your model. 
-If all the above are defined, you can construct an `BaseActiveLearner`, which will help you in the active learning process.
+If all the above are defined, you can construct an `ASLearner`, which will help you in the active learning process.
 
-```
+```python
 from asbe.base import *
 from asbe.models import *
 from sklearn.linear_model import LogisticRegression
@@ -24,7 +24,7 @@ from sklearn.ensemble import RandomForestClassifier
 import numpy as np
 ```
 
-```
+```python
 N = 1000
 X = np.random.normal(size = N*2).reshape((-1,2))
 t = np.random.binomial(n = 1, p = 0.5, size = N)
@@ -43,15 +43,14 @@ Similarly, you can create an `BaseActiveLearner`, for which you will initialize 
 You can call `.fit()` on the `BaseActiveLearner`, which will by default fit the training data supplied. To select new units from the pool, you just need to call the `query()` method, which will return the selected `X` and the `query_ix` of these units. `BaseActiveLearner` expects the `n2` argument, which tells  how many units are queried at once. For sequential AL, we can set this to 1. Additionally, some query strategies can require different treatment effect estimates - EMCM needs uncertainty around the ITE. We can explicitly tell the the `BaseITEEstimator` to return all the predicted treatment effects. 
 Then, we can teach the newly acquired units to the learner, by calling the `teach` function. The `score` function provides an evaluation of the given learner.
 
-```
-from xbart import XBART
+```python
 from sklearn.model_selection import train_test_split
 from sklearn.linear_model import SGDRegressor
 from copy import deepcopy
 import pandas as pd
 ```
 
-```
+```python
 X_train, X_test, t_train, t_test, y_train, y_test, ite_train, ite_test = train_test_split(
     X, t, y, ite,  test_size=0.8, random_state=1005)
 ds = {"X_training": X_train,
@@ -65,7 +64,7 @@ ds = {"X_training": X_train,
       "t_test": t_test,
       "ite_test": ite_test
      }
-asl = BaseActiveLearner(estimator = BaseITEEstimator(model = XBART(),
+asl = BaseActiveLearner(estimator = BaseITEEstimator(model = RandomForestClassifier(),
                                          two_model=False),
                         acquisition_function=BaseAcquisitionFunction(),
                         assignment_function=BaseAssignmentFunction(),
@@ -85,7 +84,7 @@ asl.score()
 
 
 
-```
+```python
 asl = BaseActiveLearner(estimator = BaseITEEstimator(model = RandomForestClassifier(),
                                          two_model=True),
                         acquisition_function=[BaseAcquisitionFunction(),
@@ -97,7 +96,7 @@ asl = BaseActiveLearner(estimator = BaseITEEstimator(model = RandomForestClassif
 resd = pd.DataFrame(asl.simulate(metric="decision"))
 ```
 
-```
+```python
 resd.plot()
 ```
 

@@ -64,6 +64,23 @@ The animation.avconv_args rcparam was deprecated in Matplotlib 3.3 and will be r
 
 <div class="inner_cell">
     <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span> 
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    {% endraw %}
+
+    {% raw %}
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="kn">from</span> <span class="nn">asbe.base</span> <span class="k">import</span> <span class="o">*</span>
 <span class="kn">from</span> <span class="nn">asbe.models</span> <span class="k">import</span> <span class="o">*</span>
 <span class="kn">from</span> <span class="nn">asbe.estimators</span> <span class="k">import</span> <span class="o">*</span>
@@ -81,21 +98,6 @@ The animation.avconv_args rcparam was deprecated in Matplotlib 3.3 and will be r
 </pre></div>
 
     </div>
-</div>
-</div>
-
-<div class="output_wrapper">
-<div class="output">
-
-<div class="output_area">
-
-<div class="output_subarea output_stream output_stderr output_text">
-<pre>/opt/anaconda3/lib/python3.7/site-packages/dask/dataframe/utils.py:14: FutureWarning: pandas.util.testing is deprecated. Use the functions in the public API at pandas.testing instead.
-  import pandas.util.testing as tm
-</pre>
-</div>
-</div>
-
 </div>
 </div>
 
@@ -216,7 +218,8 @@ $\displaystyle 1.7367637517137022$
 
 <div class="inner_cell">
     <div class="input_area">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="n">bite</span> <span class="o">=</span> <span class="n">OPENBTITEEstimator</span><span class="p">(</span><span class="n">model</span><span class="o">=</span><span class="n">OPENBT</span><span class="p">(</span><span class="n">model</span><span class="o">=</span><span class="s2">&quot;bart&quot;</span><span class="p">),</span>
+<div class=" highlight hl-ipython3"><pre><span></span><span class="c1">#nbdev_slow_test</span>
+<span class="n">bite</span> <span class="o">=</span> <span class="n">OPENBTITEEstimator</span><span class="p">(</span><span class="n">model</span><span class="o">=</span><span class="n">OPENBT</span><span class="p">(</span><span class="n">model</span><span class="o">=</span><span class="s2">&quot;bart&quot;</span><span class="p">),</span>
                           <span class="n">two_model</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
                           <span class="n">ps_model</span>  <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
                           <span class="n">dataset</span>   <span class="o">=</span> <span class="n">ds</span><span class="p">)</span>
@@ -261,7 +264,8 @@ Running model...
 
 <div class="inner_cell">
     <div class="input_area">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="n">bite</span> <span class="o">=</span> <span class="n">CausalForestEstimator</span><span class="p">(</span>
+<div class=" highlight hl-ipython3"><pre><span></span><span class="c1">#nbdev_slow_test</span>
+<span class="n">bite</span> <span class="o">=</span> <span class="n">CausalForestEstimator</span><span class="p">(</span>
                         <span class="n">two_model</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
                         <span class="n">ps_model</span>  <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
                         <span class="n">dataset</span>   <span class="o">=</span> <span class="n">ds</span><span class="p">)</span>
@@ -283,7 +287,8 @@ Running model...
 
 <div class="inner_cell">
     <div class="input_area">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="n">zcite</span> <span class="o">=</span> <span class="n">CEVAEEstimator</span><span class="p">(</span><span class="n">dataset</span><span class="o">=</span><span class="n">ds</span><span class="p">,</span><span class="n">two_model</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+<div class=" highlight hl-ipython3"><pre><span></span><span class="c1">#nbdev_slow_test</span>
+<span class="n">zcite</span> <span class="o">=</span> <span class="n">CEVAEEstimator</span><span class="p">(</span><span class="n">dataset</span><span class="o">=</span><span class="n">ds</span><span class="p">,</span><span class="n">two_model</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
 <span class="n">zcite</span><span class="o">.</span><span class="n">fit</span><span class="p">()</span>
 <span class="n">zpreds_ce</span> <span class="o">=</span> <span class="n">zcite</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">X</span><span class="o">=</span><span class="n">ds</span><span class="p">[</span><span class="s2">&quot;X_test&quot;</span><span class="p">])</span>
 </pre></div>
@@ -325,7 +330,8 @@ DEBUG 	 batch ate = 0.0672644
 
 <div class="inner_cell">
     <div class="input_area">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="n">gite</span> <span class="o">=</span> <span class="n">GPEstimator</span><span class="p">(</span><span class="n">model</span><span class="o">=</span><span class="n">GaussianProcessRegressor</span><span class="p">(),</span>
+<div class=" highlight hl-ipython3"><pre><span></span><span class="c1">#nbdev_slow_test</span>
+<span class="n">gite</span> <span class="o">=</span> <span class="n">GPEstimator</span><span class="p">(</span><span class="n">model</span><span class="o">=</span><span class="n">GaussianProcessRegressor</span><span class="p">(),</span>
                           <span class="n">two_model</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
                           <span class="n">ps_model</span>  <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
                           <span class="n">dataset</span>   <span class="o">=</span> <span class="n">ds</span><span class="p">)</span>
