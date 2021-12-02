@@ -12,7 +12,8 @@ from sklearn.model_selection import train_test_split
 from copy import deepcopy
 
 # Cell
-def get_ihdp_dict(i = 1, test_size = 0.9, seperate_pool_test = False, pool_size=0.8):
+def get_ihdp_dict(i = 1, test_size = 0.9, seperate_pool_test = False, pool_size=0.8, seed = None):
+    seed = 1005 if seed is None else seed
     df = pd.read_csv(
     f"https://raw.githubusercontent.com/AMLab-Amsterdam/CEVAE/master/datasets/IHDP/csv/ihdp_npci_{i}.csv",
     names = ["treatment", "y_factual", "y_cfactual", "mu0", "mu1"] + [f'x{x}' for x in range(25)])
