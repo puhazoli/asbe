@@ -2,21 +2,30 @@
 
 __all__ = ["index", "modules", "custom_doc_links", "git_url"]
 
-index = {"BaseITEEstimator": "00_base.ipynb",
+index = {"FitTask": "00_base.ipynb",
+         "BaseITEEstimator": "00_base.ipynb",
          "BaseActiveLearner": "00_base.ipynb",
          "BaseAcquisitionFunction": "00_base.ipynb",
          "BaseAssignmentFunction": "00_base.ipynb",
-         "random_batch_sampling": "01_core.ipynb",
-         "uncertainty_batch_sampling": "01_core.ipynb",
-         "type_s_batch_sampling": "01_core.ipynb",
-         "expected_model_change_maximization": "01_core.ipynb",
-         "ASLearner": "01_core.ipynb",
-         "estimator_type": "01_core.ipynb",
-         "ITEEstimator": "01_core.ipynb",
-         "variance_based_assf": "01_core.ipynb"}
+         "BaseStoppingRule": "00_base.ipynb",
+         "BaseDataGenerator": "00_base.ipynb",
+         "RandomAcquisitionFunction": "01_models.ipynb",
+         "UncertaintyAcquisitionFunction": "01_models.ipynb",
+         "TypeSAcquistionFunction": "01_models.ipynb",
+         "EMCMAcquisitionFunction": "01_models.ipynb",
+         "RandomAssignmentFunction": "01_models.ipynb",
+         "UncertaintyAssignmentFunction": "01_models.ipynb",
+         "MajorityAssignmentFunction": "01_models.ipynb",
+         "PMajorityAssignmentFunction": "01_models.ipynb",
+         "CausalForestEstimator": "02_estimators.ipynb",
+         "OPENBTITEEstimator": "02_estimators.ipynb",
+         "GPEstimator": "02_estimators.ipynb",
+         "get_ihdp_dict": "99_misc.ipynb"}
 
 modules = ["base.py",
-           "core.py"]
+           "models.py",
+           "estimators.py",
+           "helper.py"]
 
 doc_url = "https://puhazoli.github.io/asbe/"
 

@@ -1,6 +1,13 @@
 {
   "asbe": {
     "Overview": "/",
-    "ASBE - Automatic Stopping for Batch Experiments": "core.html"
+    "Basic functionalities": "base.html",
+    "Acquisition and assignment functions": "models.html",
+    "Treatment effect estimators": "estimators.html",
+    "Misc functions": "misc.html",
+    "Simple usage of different acquisition functions": "Acquisition_functions.html",
+    "How to deal with online data": "Offline_data.html",
+    "Replication of Sundin et al, ICML 2019": "Replicate_sundin.html",
+    "Showcasing `asbe` with IHDP data": "ihdp.html"
   }
 }
