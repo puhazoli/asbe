@@ -23,13 +23,13 @@ entries:
       url: misc.html
     - output: web,pdf
       title: Simple usage of different acquisition functions
-      url: Acquisition functions.html
+      url: Acquisition_functions.html
     - output: web,pdf
       title: How to deal with online data
-      url: Offline data.html
+      url: Offline_data.html
     - output: web,pdf
       title: Replication of Sundin et al, ICML 2019
-      url: Replicate Sundin et al.html
+      url: Replicate_sundin.html
     - output: web,pdf
       title: Showcasing `asbe` with IHDP data
       url: ihdp.html
