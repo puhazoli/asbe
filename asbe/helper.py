@@ -48,6 +48,7 @@ def get_ihdp_dict(i = 1, test_size = 0.9, seperate_pool_test = False, pool_size=
              "y_test": y_test,
               "t_test": t_test,
               "ite_training" : ite_train,
+              "ite_pool" : ite_pool,
               "ite_test": ite_test
              }
     else:
