@@ -297,6 +297,11 @@ select_data(model, dataset, no_query):
 <h2 id="BaseAssignmentFunction" class="doc_header"><code>class</code> <code>BaseAssignmentFunction</code><a href="https://github.com/puhazoli/asbe/tree/master/asbe/base.py#L722" class="source_link" style="float:right">[source]</a></h2><blockquote><p><code>BaseAssignmentFunction</code>(<strong><code>base_selection</code></strong>=<em><code>0</code></em>)</p>
 </blockquote>
 <p>Base class for assignment functions</p>
+<h2 id="Arguments">Arguments<a class="anchor-link" href="#Arguments"> </a></h2><p>base_selection : int = 0
+    Which treatment to select automatically</p>
+<h2 id="Methods">Methods<a class="anchor-link" href="#Methods"> </a></h2><p>select_treatment(model, dataset, query_idx)
+    Selects the treaatment based on the model and the dataset.
+    Predictions can only be done for the selected indices to save time.</p>
 
 </div>
 
@@ -326,9 +331,14 @@ select_data(model, dataset, no_query):
 
 
 <div class="output_markdown rendered_html output_subarea ">
-<h2 id="BaseStoppingRule" class="doc_header"><code>class</code> <code>BaseStoppingRule</code><a href="https://github.com/puhazoli/asbe/tree/master/asbe/base.py#L732" class="source_link" style="float:right">[source]</a></h2><blockquote><p><code>BaseStoppingRule</code>(<strong><code>budget</code></strong>=<em><code>None</code></em>)</p>
+<h2 id="BaseStoppingRule" class="doc_header"><code>class</code> <code>BaseStoppingRule</code><a href="https://github.com/puhazoli/asbe/tree/master/asbe/base.py#L744" class="source_link" style="float:right">[source]</a></h2><blockquote><p><code>BaseStoppingRule</code>(<strong><code>budget</code></strong>=<em><code>None</code></em>)</p>
 </blockquote>
 <p>Base class for providing a stopping rule for the active learner</p>
+<h2 id="Arguments">Arguments<a class="anchor-link" href="#Arguments"> </a></h2><p>budget : int = None
+    The budget that the active learner can use to run simulations</p>
+<h2 id="Methods">Methods<a class="anchor-link" href="#Methods"> </a></h2><p>check_rules(model, dataset, step)
+    The method to check if the condition is reached to stop the active
+    learning loop</p>
 
 </div>
 
@@ -358,9 +368,9 @@ select_data(model, dataset, no_query):
 
 
 <div class="output_markdown rendered_html output_subarea ">
-<h2 id="BaseDataGenerator" class="doc_header"><code>class</code> <code>BaseDataGenerator</code><a href="https://github.com/puhazoli/asbe/tree/master/asbe/base.py#L747" class="source_link" style="float:right">[source]</a></h2><blockquote><p><code>BaseDataGenerator</code>(<strong><code>ds</code></strong>:<code>Union</code>[<code>dict</code>, <code>Callable</code>], <strong><code>dgp_x</code></strong>:<code>Optional</code>[<code>Callable</code>]=<em><code>None</code></em>, <strong><code>dgp_t</code></strong>:<code>Optional</code>[<code>Callable</code>]=<em><code>None</code></em>, <strong><code>dgp_y</code></strong>:<code>Optional</code>[<code>Callable</code>]=<em><code>None</code></em>, <strong><code>no_training</code></strong>:<code>int</code>=<em><code>10</code></em>)</p>
+<h2 id="BaseDataGenerator" class="doc_header"><code>class</code> <code>BaseDataGenerator</code><a href="https://github.com/puhazoli/asbe/tree/master/asbe/base.py#L771" class="source_link" style="float:right">[source]</a></h2><blockquote><p><code>BaseDataGenerator</code>(<strong><code>ds</code></strong>:<code>Union</code>[<code>dict</code>, <code>Callable</code>], <strong><code>dgp_x</code></strong>:<code>Optional</code>[<code>Callable</code>]=<em><code>None</code></em>, <strong><code>dgp_t</code></strong>:<code>Optional</code>[<code>Callable</code>]=<em><code>None</code></em>, <strong><code>dgp_y</code></strong>:<code>Optional</code>[<code>Callable</code>]=<em><code>None</code></em>, <strong><code>no_training</code></strong>:<code>int</code>=<em><code>10</code></em>)</p>
 </blockquote>
-<p>BaseDataGenerator(ds: Union[dict, Callable], dgp_x: Union[Callable, NoneType] = None, dgp_t: Union[Callable, NoneType] = None, dgp_y: Union[Callable, NoneType] = None, no_training: int = 10)</p>
+<p>Class to generate online data for active learing purposes</p>
 
 </div>
 

@@ -43,34 +43,6 @@ nb_path: "01_models.ipynb"
 </div>
 </div>
 
-<div class="output_wrapper">
-<div class="output">
-
-<div class="output_area">
-
-<div class="output_subarea output_stream output_stderr output_text">
-<pre>In /opt/anaconda3/lib/python3.7/site-packages/matplotlib/mpl-data/stylelib/_classic_test.mplstyle: 
-The text.latex.preview rcparam was deprecated in Matplotlib 3.3 and will be removed two minor releases later.
-In /opt/anaconda3/lib/python3.7/site-packages/matplotlib/mpl-data/stylelib/_classic_test.mplstyle: 
-The mathtext.fallback_to_cm rcparam was deprecated in Matplotlib 3.3 and will be removed two minor releases later.
-In /opt/anaconda3/lib/python3.7/site-packages/matplotlib/mpl-data/stylelib/_classic_test.mplstyle: Support for setting the &#39;mathtext.fallback_to_cm&#39; rcParam is deprecated since 3.3 and will be removed two minor releases later; use &#39;mathtext.fallback : &#39;cm&#39; instead.
-In /opt/anaconda3/lib/python3.7/site-packages/matplotlib/mpl-data/stylelib/_classic_test.mplstyle: 
-The validate_bool_maybe_none function was deprecated in Matplotlib 3.3 and will be removed two minor releases later.
-In /opt/anaconda3/lib/python3.7/site-packages/matplotlib/mpl-data/stylelib/_classic_test.mplstyle: 
-The savefig.jpeg_quality rcparam was deprecated in Matplotlib 3.3 and will be removed two minor releases later.
-In /opt/anaconda3/lib/python3.7/site-packages/matplotlib/mpl-data/stylelib/_classic_test.mplstyle: 
-The keymap.all_axes rcparam was deprecated in Matplotlib 3.3 and will be removed two minor releases later.
-In /opt/anaconda3/lib/python3.7/site-packages/matplotlib/mpl-data/stylelib/_classic_test.mplstyle: 
-The animation.avconv_path rcparam was deprecated in Matplotlib 3.3 and will be removed two minor releases later.
-In /opt/anaconda3/lib/python3.7/site-packages/matplotlib/mpl-data/stylelib/_classic_test.mplstyle: 
-The animation.avconv_args rcparam was deprecated in Matplotlib 3.3 and will be removed two minor releases later.
-</pre>
-</div>
-</div>
-
-</div>
-</div>
-
 </div>
     {% endraw %}
 
@@ -293,6 +265,11 @@ select_data(model, dataset, no_query):
 <h2 id="RandomAssignmentFunction" class="doc_header"><code>class</code> <code>RandomAssignmentFunction</code><a href="https://github.com/puhazoli/asbe/tree/master/asbe/models.py#L121" class="source_link" style="float:right">[source]</a></h2><blockquote><p><code>RandomAssignmentFunction</code>(<strong><code>base_selection</code></strong>=<em><code>0</code></em>, <strong><code>p</code></strong>=<em><code>0.5</code></em>) :: <a href="/asbe/base.html#BaseAssignmentFunction"><code>BaseAssignmentFunction</code></a></p>
 </blockquote>
 <p>Base class for assignment functions</p>
+<h2 id="Arguments">Arguments<a class="anchor-link" href="#Arguments"> </a></h2><p>base_selection : int = 0
+    Which treatment to select automatically</p>
+<h2 id="Methods">Methods<a class="anchor-link" href="#Methods"> </a></h2><p>select_treatment(model, dataset, query_idx)
+    Selects the treaatment based on the model and the dataset.
+    Predictions can only be done for the selected indices to save time.</p>
 
 </div>
 
@@ -318,6 +295,11 @@ select_data(model, dataset, no_query):
 <h2 id="UncertaintyAssignmentFunction" class="doc_header"><code>class</code> <code>UncertaintyAssignmentFunction</code><a href="https://github.com/puhazoli/asbe/tree/master/asbe/models.py#L129" class="source_link" style="float:right">[source]</a></h2><blockquote><p><code>UncertaintyAssignmentFunction</code>(<strong><code>base_selection</code></strong>=<em><code>0</code></em>) :: <a href="/asbe/base.html#BaseAssignmentFunction"><code>BaseAssignmentFunction</code></a></p>
 </blockquote>
 <p>Base class for assignment functions</p>
+<h2 id="Arguments">Arguments<a class="anchor-link" href="#Arguments"> </a></h2><p>base_selection : int = 0
+    Which treatment to select automatically</p>
+<h2 id="Methods">Methods<a class="anchor-link" href="#Methods"> </a></h2><p>select_treatment(model, dataset, query_idx)
+    Selects the treaatment based on the model and the dataset.
+    Predictions can only be done for the selected indices to save time.</p>
 
 </div>
 
@@ -343,6 +325,11 @@ select_data(model, dataset, no_query):
 <h2 id="MajorityAssignmentFunction" class="doc_header"><code>class</code> <code>MajorityAssignmentFunction</code><a href="https://github.com/puhazoli/asbe/tree/master/asbe/models.py#L141" class="source_link" style="float:right">[source]</a></h2><blockquote><p><code>MajorityAssignmentFunction</code>(<strong><code>base_selection</code></strong>=<em><code>0</code></em>) :: <a href="/asbe/base.html#BaseAssignmentFunction"><code>BaseAssignmentFunction</code></a></p>
 </blockquote>
 <p>Base class for assignment functions</p>
+<h2 id="Arguments">Arguments<a class="anchor-link" href="#Arguments"> </a></h2><p>base_selection : int = 0
+    Which treatment to select automatically</p>
+<h2 id="Methods">Methods<a class="anchor-link" href="#Methods"> </a></h2><p>select_treatment(model, dataset, query_idx)
+    Selects the treaatment based on the model and the dataset.
+    Predictions can only be done for the selected indices to save time.</p>
 
 </div>
 
@@ -368,6 +355,11 @@ select_data(model, dataset, no_query):
 <h2 id="PMajorityAssignmentFunction" class="doc_header"><code>class</code> <code>PMajorityAssignmentFunction</code><a href="https://github.com/puhazoli/asbe/tree/master/asbe/models.py#L149" class="source_link" style="float:right">[source]</a></h2><blockquote><p><code>PMajorityAssignmentFunction</code>(<strong><code>base_selection</code></strong>=<em><code>0</code></em>, <strong><code>p</code></strong>=<em><code>0.5</code></em>) :: <a href="/asbe/base.html#BaseAssignmentFunction"><code>BaseAssignmentFunction</code></a></p>
 </blockquote>
 <p>Base class for assignment functions</p>
+<h2 id="Arguments">Arguments<a class="anchor-link" href="#Arguments"> </a></h2><p>base_selection : int = 0
+    Which treatment to select automatically</p>
+<h2 id="Methods">Methods<a class="anchor-link" href="#Methods"> </a></h2><p>select_treatment(model, dataset, query_idx)
+    Selects the treaatment based on the model and the dataset.
+    Predictions can only be done for the selected indices to save time.</p>
 
 </div>
 
