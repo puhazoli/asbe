@@ -720,7 +720,19 @@ class BaseAcquisitionFunction():
 
 # Cell
 class BaseAssignmentFunction():
-    """Base class for assignment functions"""
+    """Base class for assignment functions
+
+    Arguments
+    ---------
+    base_selection : int = 0
+        Which treatment to select automatically
+
+    Methods
+    -------
+    select_treatment(model, dataset, query_idx)
+        Selects the treaatment based on the model and the dataset.
+        Predictions can only be done for the selected indices to save time.
+    """
 
     def __init__(self, base_selection = 0):
         self.base_selection = base_selection
@@ -730,7 +742,19 @@ class BaseAssignmentFunction():
 
 # Cell
 class BaseStoppingRule():
-    """Base class for providing a stopping rule for the active learner"""
+    """Base class for providing a stopping rule for the active learner
+
+    Arguments
+    ---------
+    budget : int = None
+        The budget that the active learner can use to run simulations
+
+    Methods
+    -------
+    check_rules(model, dataset, step)
+        The method to check if the condition is reached to stop the active
+        learning loop
+    """
 
     def __init__(self, budget=None):
         self.budget = budget
@@ -745,6 +769,7 @@ class BaseStoppingRule():
 # Cell
 @dataclass
 class BaseDataGenerator():
+    """Class to generate online data for active learing purposes"""
     ds: Union[dict, Callable]
     dgp_x : Union[Callable, None] = None
     dgp_t : Union[Callable, None] = None

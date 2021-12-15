@@ -1,3 +1,4 @@
+
 # Automatic Stopping for Batch-mode Experimentation
 > Code for using active learning and automatic stopping for designing experiments
 

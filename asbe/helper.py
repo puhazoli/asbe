@@ -13,6 +13,22 @@ from copy import deepcopy
 
 # Cell
 def get_ihdp_dict(i = 1, test_size = 0.9, seperate_pool_test = False, pool_size=0.8, seed = None):
+    """
+    Method to query the IHDP data from the AMlab github repo
+
+    Arguments
+    ---------
+    i : int = 1
+        Which IHDP dataset to get (between 1 and 10)
+    test_size : 0.9
+        Fraction of the data used for test set
+    seperate_pool_test:
+        Whether the pool and the test set are different
+    pool_size :
+        Fraction of test data when pool vs test split is done
+    seed :
+        Seed when splitting data
+    """
     seed = 1005 if seed is None else seed
     df = pd.read_csv(
     f"https://raw.githubusercontent.com/AMLab-Amsterdam/CEVAE/master/datasets/IHDP/csv/ihdp_npci_{i}.csv",
