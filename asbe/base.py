@@ -404,7 +404,7 @@ class BaseActiveLearner(BaseEstimator):
         """
         return self.estimator.predict(X=X)
 
-    def query(self, no_query = None, acquisition_function = None):
+    def query(self, no_query = None, acquisition_function = None, **kwargs):
         """Main function to select datapoints for labeling
 
         Calls the acquisition function to determine which units to label.
@@ -437,7 +437,8 @@ class BaseActiveLearner(BaseEstimator):
             if self.offline:
                 X_new, query_idx = acquisition_function.select_data(self.estimator,
                                                               self.dataset,
-                                                              no_query)
+                                                              no_query,
+                                                              **kwargs)
             else:
                 X_get = self.dataset.get_X(no_query = no_query)
                 data_to_estimate = {"X_training":self.dataset["X_training"],
@@ -445,7 +446,8 @@ class BaseActiveLearner(BaseEstimator):
                 decision_to_query = acquisition_function.select_data(self.estimator,
                                                               data_to_estimate,
                                                               no_query,
-                                                              offline = False)
+                                                              offline = False,
+                                                              **kwargs)
                 if decision_to_query:
                     self.X_to_add = X_get
                     X_new = X_get
@@ -652,7 +654,7 @@ class BaseAcquisitionFunction():
         self.method = method
         self.name = name + "_" + str(no_query)
 
-    def calculate_metrics(self, model, dataset) -> np.array:
+    def calculate_metrics(self, model, dataset, **kwargs) -> np.array:
         """
         Method to calculate base metrics for assignment function
 
@@ -669,7 +671,7 @@ class BaseAcquisitionFunction():
         """
         return np.arange(dataset["X_pool"].shape[0]) + 1
 
-    def select_data(self, model, dataset, no_query, offline=True):
+    def select_data(self, model, dataset, no_query, offline=True, **kwargs):
         """
         Based on the calculated metrics, select data and return X and indexes
 
@@ -692,11 +694,11 @@ class BaseAcquisitionFunction():
             no_query = self.no_query
         if dataset["X_training"].shape[0] == 0:
             try:
-                metrics = self.calculate_metrics(model, dataset)
+                metrics = self.calculate_metrics(model, dataset, **kwargs)
             except:
                 metrics = np.random.shuffle(np.arange(dataset["X_pool"].shape[0]))
         else:
-            metrics = self.calculate_metrics(model, dataset)
+            metrics = self.calculate_metrics(model, dataset, **kwargs)
 
         if offline:
             if self.method == "top":
