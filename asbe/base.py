@@ -348,21 +348,24 @@ class BaseActiveLearner(BaseEstimator):
             sds = self.dataset.__dict__
         else:
             sds = self.dataset
-        for data in ["X", "t", "y"]:
-            if sds[f"{data}_training"].shape[0] > 0 :
-                try:
-                    sds[f"{data}_training"] = np.concatenate((
-                        sds[f"{data}_training"],
-                        sds[f"{data}_pool"][query_idx,:]))
-                except:
-                    sds[f"{data}_training"] = np.concatenate((
-                        sds[f"{data}_training"],
-                        sds[f"{data}_pool"][query_idx]))
-            else:
-                sds[f"{data}_training"] = sds[f"{data}_pool"][query_idx,:]
-            if remove_data:
-                sds[f"{data}_pool"] = np.delete(sds[f"{data}_pool"],
-                                                             query_idx, 0)
+        for data in ["X", "t", "y", "ite"]:
+            try:
+                if sds[f"{data}_training"].shape[0] > 0 :
+                    try:
+                        sds[f"{data}_training"] = np.concatenate((
+                            sds[f"{data}_training"],
+                            sds[f"{data}_pool"][query_idx,:]))
+                    except:
+                        sds[f"{data}_training"] = np.concatenate((
+                            sds[f"{data}_training"],
+                            sds[f"{data}_pool"][query_idx]))
+                else:
+                    sds[f"{data}_training"] = sds[f"{data}_pool"][query_idx,:]
+                if remove_data:
+                    sds[f"{data}_pool"] = np.delete(sds[f"{data}_pool"],
+                                                                 query_idx, 0)
+            except KeyError:
+                pass
         try:
             sds["y0_pool"] = np.delete(sds["y0_pool"],
                                                              query_idx, 0)
