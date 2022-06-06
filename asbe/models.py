@@ -76,7 +76,7 @@ class EMCMAcquisitionFunction(BaseAcquisitionFunction):
         self.approx_model.fit(
             X = X_scaled,
             y = np.mean(ite_train_preds, axis=1),
-            sample_weight = K*train_type_s)
+            sample_weight = self.K*train_type_s)
         # Using list as it is faster than appending to np array
         query_idx = []
         # Using a loop for the combinatorial opt. part
