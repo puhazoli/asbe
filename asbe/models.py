@@ -79,6 +79,7 @@ class EMCMAcquisitionFunction(BaseAcquisitionFunction):
             sample_weight = self.K*train_type_s)
         # Using list as it is faster than appending to np array
         query_idx = []
+        print("Starting queries")
         # Using a loop for the combinatorial opt. part
         for ix in range(self.no_query):
             if self.no_query > (dataset["X_pool"].shape[0]):
@@ -104,8 +105,14 @@ class EMCMAcquisitionFunction(BaseAcquisitionFunction):
                                             size=self.K)
                 grad = np.sum(np.abs(np.kron((true_ite - app_predicted_ite),new_X)))
                 grads = np.append(grads, grad)
-            if np.max(grads) < self.threshold:
-                break
+            # Setting up stopping rule after 10% of data has been seen
+            if self.threshold != 0:
+                print(ix)
+                if ix > .1*no_query:
+                    print(np.max(grads))
+                    print(self.threshold * np.mean(self.model_change))
+                    if np.max(grads) < self.threshold * np.mean(self.model_change):
+                        break
             self.model_change = np.append(self.model_change,np.max(grads))
             query_idx.append(int(considered_ixes[np.argmax(grads)]))
             self.approx_model.partial_fit(
@@ -115,7 +122,6 @@ class EMCMAcquisitionFunction(BaseAcquisitionFunction):
         out = np.zeros(dataset["X_pool"].shape[0])
         out[query_idx] = 1
         return out
-
 
 # Cell
 class RandomAssignmentFunction(BaseAssignmentFunction):

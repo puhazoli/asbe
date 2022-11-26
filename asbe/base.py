@@ -348,6 +348,12 @@ class BaseActiveLearner(BaseEstimator):
             sds = self.dataset.__dict__
         else:
             sds = self.dataset
+        if "outside_data" in kwargs:
+            for data in ["X", "t", "y"]:
+                sds[f"{data}_training"] = np.concatenate((
+                            sds[f"{data}_training"],
+                            kwargs["outside_data"][f"{data}"]))
+            return None
         for data in ["X", "t", "y", "ite"]:
             try:
                 if sds[f"{data}_training"].shape[0] > 0 :
@@ -464,8 +470,7 @@ class BaseActiveLearner(BaseEstimator):
             X_new, query_idx = None, None
         return X_new, query_idx
 
-    def teach(self, query_idx=None, assignment_function = None, select_again = False,
-              **kwargs):
+    def teach(self, query_idx=None, assignment_function = None, select_again = False, **kwargs):
         """Function to assign the selected labels to the training set
 
         Selects counterfactuals (if possible), through the assignmnet function
@@ -476,14 +481,21 @@ class BaseActiveLearner(BaseEstimator):
         query_idx : np.array = None
             the indices of queryed samples
         assignment_function : None
-            Optional assignment function to be used tp select counterfactuals
+            Optional assignment function to be used to select counterfactuals
         select_again = False
             If there are no matching, select units until all are matching
+        kwargs["outside_data"] = None
+            If outside data is given in a dictionary, the assignment function won't do anything
+            it will assign the data given in this dict
 
         Returns
         -------
         None
         """
+        if "outside_data" in kwargs:
+            self._update_dataset(query_idx = None,
+                                 outside_data = kwargs["outside_data"])
+            return None # exit update immediately
 
         if len(self.assignment_function_list) == 0:
             if assignment_function is None:
@@ -578,7 +590,7 @@ class BaseActiveLearner(BaseEstimator):
         no_query:
             Number of units to be queried
         Metric:
-            Metric to be claculated at the end of each active learning step
+            Metric to be calculated at the end of each active learning step
 
         Returns
         -------
@@ -704,17 +716,23 @@ class BaseAcquisitionFunction():
             metrics = self.calculate_metrics(model, dataset, **kwargs)
 
         if offline:
-            if self.method == "top":
-                query_idx = np.argsort(np.asarray(metrics))[-no_query:][::-1]
-            elif self.method == "normalized":
-                p_j = (metrics - np.min(metrics))/(np.max(metrics) - np.min(metrics))
-                query_idx = []
-                for pix in p_j.argsort()[::-1]:
-                    if np.random.binomial(1, p = p_j[pix]) == 1:
-                        query_idx.append(pix)
-                    if len(query_idx) == no_query:
-                        break
-                query_idx = np.asarray(query_idx)
+            print(f"In package: self.method")
+            if self.method in ["top", "normalized", "only_ones"]:
+                if self.method == "top":
+                    query_idx = np.argsort(np.asarray(metrics))[-no_query:][::-1]
+                elif self.method == "normalized":
+                    p_j = (metrics - np.min(metrics))/(np.max(metrics) - np.min(metrics))
+                    query_idx = []
+                    for pix in p_j.argsort()[::-1]:
+                        if np.random.binomial(1, p = p_j[pix]) == 1:
+                            query_idx.append(pix)
+                        if len(query_idx) == no_query:
+                            break
+                    query_idx = np.asarray(query_idx)
+                elif self.method == "only_ones":
+                    query_idx = np.where(np.asarray(metrics) == 1)[0]
+                    query_idx = query_idx.tolist()
+                    print(query_idx)
             else:
                 raise NotImplementedError("Please use a method that is implemented")
             X_new = dataset["X_pool"][query_idx,:]
