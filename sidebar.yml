@@ -1,0 +1,12 @@
+website:
+  sidebar:
+    contents:
+      - index.ipynb
+      - 00_base.ipynb
+      - 01_models.ipynb
+      - 02_estimators.ipynb
+      - 99_misc.ipynb
+      - Acquisition_functions.ipynb
+      - Offline_data.ipynb
+      - Replicate_sundin.ipynb
+      - ihdp.ipynb
