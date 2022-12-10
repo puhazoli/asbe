@@ -1,0 +1,24 @@
+website:
+  sidebar:
+    contents:
+      - index.ipynb
+      - 00_base.ipynb
+      - 01_models.ipynb
+      - 02_estimators.ipynb
+      - 99_misc.ipynb
+      - Acquisition_functions.ipynb
+      - Offline_data.ipynb
+      - Replicate_sundin.ipynb
+      - ihdp.ipynb
+      - section: docs
+        contents:
+          - docs/index.html
+          - docs/CONTRIBUTING.html
+          - docs/acquisition_functions.html
+          - docs/base.html
+          - docs/estimators.html
+          - docs/ihdp.html
+          - docs/misc.html
+          - docs/models.html
+          - docs/offline_data.html
+          - docs/replicate_sundin.html
