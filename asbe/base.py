@@ -36,7 +36,7 @@ class FitTask(type):
                 except:
                     raise ValueError("Can't find (X,t,y) data to fit the model on")
                 try:
-                    ps_scores = kwargs["ps_scores"] if "ps_scores" in kwargs else self.dataset["ps_scores"]
+                    ps_scores  = kwargs["ps_scores"] if "ps_scores" in kwargs else self.dataset["ps_scores"]
                 except:
                     ps_scores = None
                 try:
@@ -291,7 +291,7 @@ class BaseActiveLearner(BaseEstimator):
                  stopping_function: Union[Callable, list, None],
                  dataset: dict,
                  al_steps: int = 1,
-                 offline: bool = True,
+                 offline = True,
                  **kwargs
                 ) -> None:
         """Initiates the active learning sequence
@@ -356,10 +356,10 @@ class BaseActiveLearner(BaseEstimator):
             return None
         for data in ["X", "t", "y", "ite"]:
             if self.dataset[f"{data}_training"].shape[0] > 0 :
-                if data == "X":
+                if data in ["X"]:
                     self.dataset[f"{data}_training"] = np.concatenate((
                         self.dataset[f"{data}_training"],
-                        self.dataset[f"{data}_pool"][query_idx, :]))
+                        self.dataset[f"{data}_pool"][query_idx,:]))
                 else:
                     self.dataset[f"{data}_training"] = np.concatenate((
                         self.dataset[f"{data}_training"],
@@ -412,8 +412,8 @@ class BaseActiveLearner(BaseEstimator):
         """
         return self.estimator.predict(X=X)
 
-    def query(self, no_query=None,
-              acquisition_function=None,
+    def query(self, no_query = None,
+              acquisition_function = None,
               return_all=False,
               **kwargs):
         """Main function to select datapoints for labeling
@@ -449,18 +449,18 @@ class BaseActiveLearner(BaseEstimator):
                     acquisition_function = self.acquisition_function
             if self.offline:
                 X_new, query_idx = acquisition_function.select_data(self.estimator,
-                                                                    self.dataset,
-                                                                    no_query,
-                                                                    **kwargs)
+                                                              self.dataset,
+                                                              no_query,
+                                                              **kwargs)
             else:
                 X_get = self.dataset.get_X(no_query = no_query)
-                data_to_estimate = {"X_training" : self.dataset["X_training"],
-                                    "X_pool": X_get}
+                data_to_estimate = {"X_training":self.dataset["X_training"],
+                                   "X_pool": X_get}
                 decision_to_query = acquisition_function.select_data(self.estimator,
-                                                                     data_to_estimate,
-                                                                     no_query,
-                                                                     offline = False,
-                                                                     **kwargs)
+                                                              data_to_estimate,
+                                                              no_query,
+                                                              offline = False,
+                                                              **kwargs)
                 if decision_to_query:
                     self.X_to_add = X_get
                     X_new = X_get
@@ -587,7 +587,6 @@ class BaseActiveLearner(BaseEstimator):
             try:
                 sc = metric(preds, self.dataset["ite_test"])
             except:
-                sc = None
                 raise ValueError("Metric can't be used with current data")
         return sc
 
@@ -742,7 +741,6 @@ class BaseAcquisitionFunction():
                     query_idx = np.where(np.asarray(metrics) == 1)[0]
                     query_idx = query_idx.tolist()
             else:
-                query_idx = None
                 raise NotImplementedError("Please use a method that is implemented")
             X_new = dataset["X_pool"][query_idx,:]
             out = (X_new, query_idx)
