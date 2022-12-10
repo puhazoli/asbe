@@ -372,12 +372,13 @@ class BaseActiveLearner(BaseEstimator):
         try:
             for cfs in ["y0","y1"]:
                 self.dataset[f"{cfs}_training"] = np.concatenate((
-                                self.dataset[f"{data}_training"],
-                                self.dataset[f"{data}_pool"][query_idx]))
+                                self.dataset[f"{cfs}_training"],
+                                self.dataset[f"{cfs}_pool"][query_idx]))
                 self.dataset[f"{cfs}_pool"] = np.delete(self.dataset[f"{cfs}_pool"],
                                                                  query_idx, 0)
         except KeyError:
             pass
+        return None
 
 
     def _select_counterfactuals(self, query_idx, treatment):
@@ -437,6 +438,8 @@ class BaseActiveLearner(BaseEstimator):
         X_new, query_idx :
             Selected features, selected indices
         """
+        if no_query is None:
+            no_query = self.no_query
         if self.stopping_function is not None:
             self.next_query = self.stopping_function.check_rule(
                 self.estimator, self.dataset, self.step)
