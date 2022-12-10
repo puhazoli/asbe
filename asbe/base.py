@@ -354,7 +354,7 @@ class BaseActiveLearner(BaseEstimator):
                             self.dataset[f"{data}_training"],
                             kwargs["outside_data"][f"{data}"]))
             return None
-        for data in ["X", "t", "y", "ite"]:
+        for data in ["X", "t", "y"]:
             if self.dataset[f"{data}_training"].shape[0] > 0 :
                 if data in ["X"]:
                     self.dataset[f"{data}_training"] = np.concatenate((
@@ -518,7 +518,7 @@ class BaseActiveLearner(BaseEstimator):
         else:
             if assignment_function is None:
                 assignment_function = self.assignment_function
-        try:
+        if self.offline:
             treatment = assignment_function.select_treatment(self.estimator,
                                                               self.dataset,
                                                               query_idx)
@@ -538,7 +538,7 @@ class BaseActiveLearner(BaseEstimator):
                                                               ix_reselected)
                         matching = treatment == self.dataset["t_pool"][ix_reselected]
                         self._update_dataset(ix_reselected[matching], **kwargs)
-        except:
+        else:
             treatment_to_add = self.dataset.get_t(X_new = self.X_to_add)
             y = self.dataset.get_y(X_new=self.X_to_add, t_new = treatment_to_add)
             self.dataset.__dict__["X_pool"] = self.X_to_add
@@ -850,7 +850,7 @@ class BaseDataGenerator():
         t_new = self.get_t()
         y_new = self.get_y()
         if as_test:
-            self.__dict__["X_test"] = X_new
-            self.__dict__["t_test"] = t_new
-            self.__dict__['y_test'] = y_new
+            self.X_test = X_new
+            self.t_test = t_new
+            self.y_test = y_new
         return (X_new, t_new, y_new)

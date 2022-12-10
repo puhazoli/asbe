@@ -1,0 +1,9 @@
+project:
+  output-dir: _docs
+
+website:
+  title: "asbe"
+  site-url: "https://puhazoli.github.io/asbe/"
+  description: "Active Learning for treatment effect estimation"
+  repo-branch: master
+  repo-url: "https://github.com/puhazoli/asbe/"
