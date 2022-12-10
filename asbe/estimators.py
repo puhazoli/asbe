@@ -6,10 +6,7 @@ __all__ = ['CausalForestEstimator', 'OPENBTITEEstimator', 'GPEstimator']
 # %% ../02_estimators.ipynb 2
 #| output: false
 from .base import *
-#from econml.orf import DMLOrthoForest
 from econml.dml import CausalForestDML
-# from causalml.inference.nn import CEVAE
-# from openbt.openbt import OPENBT
 import pandas as pd
 import numpy as np
 from sklearn.ensemble import RandomForestRegressor
