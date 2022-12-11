@@ -477,8 +477,8 @@ class BaseActiveLearner(BaseEstimator):
             X_new, query_idx = None, None
         if return_all:
             return {"X": X_new,
-                    "t": self.dataset["t_training"][query_idx],
-                    "y": self.dataset["y_training"][query_idx]}
+                    "t": self.dataset["t_pool"][query_idx],
+                    "y": self.dataset["y_pool"][query_idx]}
         return X_new, query_idx
 
     def teach(self, query_idx=None, assignment_function = None, select_again = False, **kwargs):
