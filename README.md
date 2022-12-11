@@ -38,24 +38,28 @@ a.fit(X_training=X, t_training=t, y_training=y)
 
 ## Learning actively
 
-Similarly, you can create an `BaseActiveLearner`, for which you will
-initialize the dataset and set the preferred modeling options. Let’s see
-how it works: - we will use XBART to model the treatment effect with a
-one-model approach - we will use expected model change maximization -
-for that, we need an approximate model, we will use the `SGDRegressor`
+Similarly, you can create an
+[`BaseActiveLearner`](https://puhazoli.github.io/asbe/base.html#baseactivelearner),
+for which you will initialize the dataset and set the preferred modeling
+options. Let’s see how it works: - we will use XBART to model the
+treatment effect with a one-model approach - we will use expected model
+change maximization - for that, we need an approximate model, we will
+use the `SGDRegressor`
 
-You can call `.fit()` on the `BaseActiveLearner`, which will by default
-fit the training data supplied. To select new units from the pool, you
-just need to call the `query()` method, which will return the selected
-`X` and the `query_ix` of these units. `BaseActiveLearner` expects the
-`n2` argument, which tells how many units are queried at once. For
-sequential AL, we can set this to 1. Additionally, some query strategies
-can require different treatment effect estimates - EMCM needs
+You can call `.fit()` on the
+[`BaseActiveLearner`](https://puhazoli.github.io/asbe/base.html#baseactivelearner),
+which will by default fit the training data supplied. To select new
+units from the pool, you just need to call the `query()` method, which
+will return the selected `X` and the `query_ix` of these units.
+[`BaseActiveLearner`](https://puhazoli.github.io/asbe/base.html#baseactivelearner)
+expects the `n2` argument, which tells how many units are queried at
+once. For sequential AL, we can set this to 1. Additionally, some query
+strategies can require different treatment effect estimates - EMCM needs
 uncertainty around the ITE. We can explicitly tell the the
-`BaseITEEstimator` to return all the predicted treatment effects. Then,
-we can teach the newly acquired units to the learner, by calling the
-`teach` function. The `score` function provides an evaluation of the
-given learner.
+[`BaseITEEstimator`](https://puhazoli.github.io/asbe/base.html#baseiteestimator)
+to return all the predicted treatment effects. Then, we can teach the
+newly acquired units to the learner, by calling the `teach` function.
+The `score` function provides an evaluation of the given learner.
 
 ``` python
 from sklearn.model_selection import train_test_split
