@@ -354,21 +354,22 @@ class BaseActiveLearner(BaseEstimator):
                             self.dataset[f"{data}_training"],
                             kwargs["outside_data"][f"{data}"]))
             return None
-        for data in ["X", "t", "y"]:
-            if self.dataset[f"{data}_training"].shape[0] > 0 :
-                if data in ["X"]:
-                    self.dataset[f"{data}_training"] = np.concatenate((
-                        self.dataset[f"{data}_training"],
-                        self.dataset[f"{data}_pool"][query_idx,:]))
+        for data in ["X", "t", "y", "ite"]:
+            if data in self.dataset.keys():
+                if self.dataset[f"{data}_training"].shape[0] > 0 :
+                    if data in ["X"]:
+                        self.dataset[f"{data}_training"] = np.concatenate((
+                            self.dataset[f"{data}_training"],
+                            self.dataset[f"{data}_pool"][query_idx,:]))
+                    else:
+                        self.dataset[f"{data}_training"] = np.concatenate((
+                            self.dataset[f"{data}_training"],
+                            self.dataset[f"{data}_pool"][query_idx]))
                 else:
-                    self.dataset[f"{data}_training"] = np.concatenate((
-                        self.dataset[f"{data}_training"],
-                        self.dataset[f"{data}_pool"][query_idx]))
-            else:
-                self.dataset[f"{data}_training"] = self.dataset[f"{data}_pool"][query_idx,:]
-            if remove_data:
-                self.dataset[f"{data}_pool"] = np.delete(self.dataset[f"{data}_pool"],
-                                                             query_idx, 0)
+                    self.dataset[f"{data}_training"] = self.dataset[f"{data}_pool"][query_idx,:]
+                if remove_data:
+                    self.dataset[f"{data}_pool"] = np.delete(self.dataset[f"{data}_pool"],
+                                                                 query_idx, 0)
         try:
             for cfs in ["y0","y1"]:
                 self.dataset[f"{cfs}_training"] = np.concatenate((
@@ -721,11 +722,11 @@ class BaseAcquisitionFunction():
             no_query = self.no_query
         if dataset["X_training"].shape[0] == 0:
             try:
-                metrics = self.calculate_metrics(model, dataset)
+                metrics = self.calculate_metrics(model, dataset, **kwargs)
             except:
                 metrics = np.random.shuffle(np.arange(dataset["X_pool"].shape[0]))
         else:
-            metrics = self.calculate_metrics(model, dataset)
+            metrics = self.calculate_metrics(model, dataset, **kwargs)
 
         if offline:
             if self.method in ["top", "normalized", "only_ones"]:
