@@ -7,6 +7,16 @@ website:
       - 02_estimators.ipynb
       - 99_misc.ipynb
       - Acquisition_functions.ipynb
+      - CONTRIBUTING.md
+      - LICENSE
+      - MANIFEST.in
       - Offline_data.ipynb
+      - README.md
       - Replicate_sundin.ipynb
       - ihdp.ipynb
+      - nbdev.yml
+      - settings.ini
+      - setup.py
+      - sidebar.yml
+      - styles.css
+      - test_nbs.py
