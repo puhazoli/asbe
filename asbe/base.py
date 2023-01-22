@@ -354,8 +354,9 @@ class BaseActiveLearner(BaseEstimator):
                             self.dataset[f"{data}_training"],
                             kwargs["outside_data"][f"{data}"]))
             return None
+        data_available = list(set([x.split("_")[0] for x in self.dataset.keys()]))
         for data in ["X", "t", "y", "ite"]:
-            if data in self.dataset.keys():
+            if data in data_available and f"{data}_training" in self.dataset.keys():
                 if self.dataset[f"{data}_training"].shape[0] > 0 :
                     if data in ["X"]:
                         self.dataset[f"{data}_training"] = np.concatenate((
