@@ -590,7 +590,7 @@ class BaseActiveLearner(BaseEstimator):
 #                                 treatment=self.dataset["t_test"])
         elif callable(metric):
             try:
-                sc = metric(preds, self.dataset["ite_test"])
+                sc = metric(preds, self.dataset)
             except:
                 raise ValueError("Metric can't be used with current data")
         return sc
