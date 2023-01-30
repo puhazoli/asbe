@@ -50,9 +50,9 @@ def get_ihdp_dict(i = 1, test_size = 0.9, seperate_pool_test = False, pool_size=
                    df['y_cfactual'] - df["y_factual"])
     if seperate_pool_test:
         X_train, X_pool, t_train, t_pool, y_train, y_pool, ite_train, ite_pool, y1_train, y1_pool, y0_train, y0_pool = train_test_split(
-    X, t, y, ite, y1, y0,  test_size=test_size, random_state=1005)
+    X, t, y, ite, y1, y0,  test_size=test_size, random_state=seed)
         X_pool, X_test, t_pool, t_test, y_pool,y_test, ite_pool, ite_test, y1_pool,y1_test, y0_pool, y0_test = train_test_split(
-    X_pool, t_pool, y_pool, ite_pool, y1_pool, y0_pool, test_size=pool_size, random_state=1005)
+    X_pool, t_pool, y_pool, ite_pool, y1_pool, y0_pool, test_size=pool_size, random_state=seed)
         ds = {"X_training": X_train,
              "y_training": y_train,
              "t_training": t_train,
