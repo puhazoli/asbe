@@ -322,10 +322,12 @@ class BaseActiveLearner(BaseEstimator):
         self.estimator = estimator
         if type(acquisition_function) is list:
             self.acquisition_function_list = acquisition_function
+            self.acquisition_function = None
         else:
             self.acquisition_function = acquisition_function
             self.acquisition_function_list = []
         if type(assignment_function) is list:
+            self.assignment_function = None
             self.assignment_function_list = assignment_function
         else:
             self.assignment_function = assignment_function
