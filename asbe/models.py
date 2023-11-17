@@ -7,6 +7,7 @@ __all__ = ['RandomAcquisitionFunction', 'UncertaintyAcquisitionFunction', 'TypeS
 
 # %% ../01_models.ipynb 3
 #| output: false
+#| output: false
 import numpy as np
 from .base import *
 from sklearn.base import BaseEstimator, ClassifierMixin, RegressorMixin
@@ -84,7 +85,6 @@ class EMCMAcquisitionFunction(BaseAcquisitionFunction):
             sample_weight = self.K*train_type_s)
         # Using list as it is faster than appending to np array
         query_idx = []
-        print("Starting queries")
         # Using a loop for the combinatorial opt. part
         for ix in range(self.no_query):
             if self.no_query > (dataset["X_pool"].shape[0]):
